@@ -1,35 +1,43 @@
-export interface SM2Card {
-    easeFactor: number   // Hệ số dễ, mặc định 2.5
-    interval: number     // Số ngày đến lần ôn tiếp theo
-    repetitions: number  // Số lần đã ôn đúng liên tiếp
-    nextReviewAt: Date
+// Thuật toán SM-2 cơ bản cho Spaced Repetition
+// quality: 0-5 (0: quên hoàn toàn, 5: nhớ hoàn hảo)
+
+interface SM2Input {
+  easeFactor: number
+  interval: number
+  repetitions: number
+  nextReviewAt: Date
 }
 
-/**
- * Tính toán lịch ôn tiếp theo dựa trên chất lượng trả lời
- * @param quality 0-5: 0-2 = sai, 3 = khó, 4 = đúng, 5 = rất dễ
- */
-export function calculateNextReview(card: SM2Card, quality: number): SM2Card {
-    let { easeFactor, interval, repetitions } = card
+export function calculateNextReview(current: SM2Input, quality: number) {
+  let { easeFactor, interval, repetitions } = current
 
-    if (quality >= 3) {
-        if (repetitions === 0) interval = 1
-        else if (repetitions === 1) interval = 6
-        else interval = Math.round(interval * easeFactor)
-
-        repetitions += 1
+  if (quality >= 3) {
+    if (repetitions === 0) {
+      interval = 1
+    } else if (repetitions === 1) {
+      interval = 6
     } else {
-        repetitions = 0
-        interval = 1
+      interval = Math.round(interval * easeFactor)
     }
+    repetitions++
+  } else {
+    repetitions = 0
+    interval = 1
+  }
 
-    easeFactor = Math.max(
-        1.3,
-        easeFactor + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)
-    )
+  // Cập nhật Ease Factor: EF = EF + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
+  easeFactor = easeFactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
+  if (easeFactor < 1.3) easeFactor = 1.3
 
-    const nextReviewAt = new Date()
-    nextReviewAt.setDate(nextReviewAt.getDate() + interval)
+  const nextReviewAt = new Date()
+  nextReviewAt.setDate(nextReviewAt.getDate() + interval)
+  // Xóa đi phần giờ phút giây để chỉ tính theo ngày
+  nextReviewAt.setHours(0, 0, 0, 0)
 
-    return { easeFactor, interval, repetitions, nextReviewAt }
+  return {
+    easeFactor,
+    interval,
+    repetitions,
+    nextReviewAt,
+  }
 }

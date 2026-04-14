@@ -1,12 +1,9 @@
-import Redis from "ioredis";
+import { Redis } from 'ioredis'
 
-const redisClient = () => {
-  if (process.env.REDIS_URL) {
-    return new Redis(process.env.REDIS_URL);
-  }
-  return null;
-};
+const redisGlobal = global as unknown as { redis: Redis }
 
-export const redis = (globalThis as any).redis || redisClient();
+export const redis =
+  redisGlobal.redis ??
+  new Redis(process.env.REDIS_URL || 'redis://localhost:6379')
 
-if (process.env.NODE_ENV !== "production") (globalThis as any).redis = redis;
+if (process.env.NODE_ENV !== 'production') redisGlobal.redis = redis
