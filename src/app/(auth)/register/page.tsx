@@ -59,63 +59,65 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-2 font-outfit">Tạo tài khoản</h1>
-        <p className="text-gray-500 text-sm mb-6">
-          Đã có tài khoản?{' '}
-          <Link href="/login" className="text-blue-600 hover:underline font-medium">
-            Đăng nhập
-          </Link>
-        </p>
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 py-20">
+      <div className="w-full max-w-[480px] space-y-12">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-slate-200 text-white font-bold text-xs">
+            EP
+          </div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Tạo tài khoản mới</h1>
+          <p className="text-slate-400 text-lg font-medium">Bắt đầu hành trình chinh phục tiếng Anh ngay hôm nay</p>
+        </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
-            <input
-              {...register('name')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-              placeholder="Nguyễn Văn An"
-            />
-            {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[13px] font-bold text-slate-400 uppercase tracking-wider ml-1">Họ và tên</label>
+              <input
+                {...register('name')}
+                placeholder="Nguyễn Văn An"
+                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-slate-300"
+              />
+              {errors.name && <p className="text-red-500 text-[11px] font-medium ml-1">{errors.name.message}</p>}
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[13px] font-bold text-slate-400 uppercase tracking-wider ml-1">Lớp học</label>
+              <select
+                {...register('grade')}
+                className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-accent/20 transition-all cursor-pointer appearance-none"
+              >
+                <option value={10}>Lớp 10</option>
+                <option value={11}>Lớp 11</option>
+                <option value={12}>Lớp 12</option>
+              </select>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <div className="space-y-2">
+            <label className="text-[13px] font-bold text-slate-400 uppercase tracking-wider ml-1">Email</label>
             <input
               {...register('email')}
               type="email"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-              placeholder="email@example.com"
+              placeholder="name@email.com"
+              className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-slate-300"
             />
-            {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+            {errors.email && <p className="text-red-500 text-[11px] font-medium ml-1">{errors.email.message}</p>}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
+          <div className="space-y-2">
+            <label className="text-[13px] font-bold text-slate-400 uppercase tracking-wider ml-1">Mật khẩu</label>
             <input
               {...register('password')}
               type="password"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               placeholder="Ít nhất 8 ký tự"
+              className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-slate-300"
             />
-            {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Lớp</label>
-            <select
-              {...register('grade')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all cursor-pointer"
-            >
-              <option value={10}>Lớp 10</option>
-              <option value={11}>Lớp 11</option>
-              <option value={12}>Lớp 12</option>
-            </select>
+            {errors.password && <p className="text-red-500 text-[11px] font-medium ml-1">{errors.password.message}</p>}
           </div>
 
           {serverError && (
-            <p className="text-red-500 text-sm bg-red-50 px-3 py-2 rounded-lg border border-red-100 animate-in fade-in slide-in-from-top-1">
+            <p className="text-red-500 text-xs bg-red-50 px-4 py-3 rounded-xl border border-red-100 font-medium">
               {serverError}
             </p>
           )}
@@ -123,10 +125,17 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-all shadow-md shadow-blue-200 active:scale-[0.98]"
+            className="w-full py-4 bg-slate-900 text-white rounded-2xl text-sm font-bold shadow-xl shadow-slate-200 transition-all active:scale-[0.98] disabled:opacity-50"
           >
-            {isSubmitting ? 'Đang tạo tài khoản...' : 'Đăng ký'}
+            {isSubmitting ? 'Đang khởi tạo...' : 'Đăng ký ngay'}
           </button>
+
+          <p className="text-center text-sm text-slate-400 font-medium pt-4">
+            Đã có tài khoản?{' '}
+            <Link href="/login" className="text-slate-900 hover:text-accent font-bold transition-colors">
+              Đăng nhập tại đây
+            </Link>
+          </p>
         </form>
       </div>
     </div>

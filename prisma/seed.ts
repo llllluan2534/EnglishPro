@@ -28,7 +28,7 @@ async function main() {
     update: {},
     create: {
       name: 'Cô Nguyễn',
-      email: 'giaovien@englishpro.vn',
+      email: 'c',
       password: await hash('Teacher@123', 10),
       role: Role.TEACHER,
       bio: 'Giáo viên tiếng Anh với 10 năm kinh nghiệm',

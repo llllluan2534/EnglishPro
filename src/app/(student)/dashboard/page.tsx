@@ -34,31 +34,31 @@ export default async function DashboardPage() {
   const progressPercent = Math.min(100, Math.max(0, ((totalXP - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100))
 
   return (
-    <div className="space-y-10">
+    <div className="max-w-7xl mx-auto space-y-12 py-8">
       {/* Welcome Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 font-outfit">
-            Chào buổi sáng, {session.user.name.split(' ').pop()}! 👋
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-bold tracking-tight text-slate-900">
+            Chào nhé, {session.user.name.split(' ').pop()}
           </h1>
-          <p className="text-gray-500 mt-2 text-lg">
-            Hôm nay là một ngày tuyệt vời để học từ mới.
+          <p className="text-slate-500 text-lg font-medium">
+            Hôm nay mình học bài gì nhỉ?
           </p>
         </div>
         
-        {/* Level Banner */}
-        <div className="bg-white rounded-[2rem] border border-gray-100 p-6 flex items-center gap-6 shadow-xl shadow-blue-50/50 min-w-[320px]">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-200 shrink-0">
-            <span className="text-2xl font-black">{level}</span>
+        {/* Level Stats - Ultra Minimal */}
+        <div className="glass rounded-3xl p-6 flex items-center gap-6 min-w-[280px]">
+          <div className="w-14 h-14 bg-accent text-white rounded-2xl flex items-center justify-center text-2xl font-bold shadow-lg shadow-accent/20">
+            {level}
           </div>
-          <div className="flex-1">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-xs font-bold text-gray-400 tracking-widest uppercase">Cấp độ hiện tại</span>
-              <span className="text-xs font-bold text-blue-600">{totalXP} / {nextLevelXP} XP</span>
+          <div className="flex-1 space-y-2">
+            <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-slate-400">
+              <span>Cấp độ {level}</span>
+              <span>{totalXP} XP</span>
             </div>
-            <div className="w-full h-3 bg-gray-50 rounded-full overflow-hidden border border-gray-100 p-0.5">
+            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
               <div 
-                className="h-full bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full transition-all duration-1000"
+                className="h-full bg-accent transition-all duration-1000 ease-out"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
@@ -66,73 +66,70 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Primary Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
-          icon={<Flame size={24} className="text-orange-500" />}
-          label="Chuỗi ngày học" 
-          value={`${streak?.currentStreak ?? 0} ngày`} 
-          sub={`Kỷ lục: ${streak?.longestStreak ?? 0} ngày`}
-          color="bg-orange-50/50"
+          icon={<Flame size={20} />}
+          label="Chuỗi ngày" 
+          value={`${streak?.currentStreak ?? 0}`} 
+          sub="Ngày liên tiếp"
+          variant="orange"
         />
         <StatCard 
-          icon={<Layers size={24} className="text-blue-500" />}
-          label="Cần ôn hôm nay" 
-          value={`${dueCount} thẻ`} 
-          sub={dueCount > 0 ? 'Ưu tiên hàng đầu' : 'Đã hoàn thành tốt'}
-          color="bg-blue-50/50"
-          action={dueCount > 0 ? <Link href="/flashcards" className="text-blue-600 font-bold hover:underline">Ôn ngay</Link> : null}
+          icon={<BookOpen size={20} />}
+          label="Cần ôn tập" 
+          value={`${dueCount}`} 
+          sub="Thẻ cần review"
+          variant="blue"
+          action={dueCount > 0 ? <Link href="/flashcards" className="text-accent hover:underline">Ôn ngay</Link> : null}
         />
         <StatCard 
-          icon={<Trophy size={24} className="text-yellow-500" />}
-          label="Xếp hạng tuần" 
+          icon={<Trophy size={20} />}
+          label="Hạng tuần" 
           value="#12" 
-          sub="Top 5% học sinh"
-          color="bg-yellow-50/50"
+          sub="Top 5% toàn app"
+          variant="yellow"
         />
         <StatCard 
-          icon={<TrendingUp size={24} className="text-green-500" />}
-          label="Tiến độ tuần" 
-          value="+120 XP" 
-          sub="Học nhiều hơn 20%"
-          color="bg-green-50/50"
+          icon={<TrendingUp size={20} />}
+          label="Tăng trưởng" 
+          value="+120" 
+          sub="XP kiếm được"
+          variant="green"
         />
       </div>
 
-      {/* Main Content Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        {/* Course Progress */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        {/* Learning Paths */}
+        <div className="lg:col-span-2 space-y-8">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-gray-900 font-outfit">Lộ trình học tập</h2>
-            <Link href="/learn" className="text-sm font-bold text-blue-600 flex items-center gap-1 group">
-              Tất cả bài học <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            <h2 className="text-2xl font-bold text-slate-900">Lộ trình học tập</h2>
+            <Link href="/learn" className="text-sm font-bold text-accent px-4 py-2 hover:bg-accent/5 rounded-xl transition-colors">
+              Xem tất cả
             </Link>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {topics.map(topic => (
               <Link 
                 key={topic.id}
                 href={`/learn/${topic.id}`}
-                className="group bg-white rounded-3xl border border-gray-100 p-6 hover:shadow-2xl hover:shadow-blue-100/50 hover:border-blue-100 transition-all duration-300 relative overflow-hidden"
+                className="minimal-card group relative p-8"
               >
-                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50/30 rounded-full -mr-10 -mt-10 group-hover:scale-110 transition-transform"></div>
-                
-                <div className="flex items-center gap-2 mb-4">
-                   <div className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[0.65rem] font-black uppercase tracking-widest">
+                <div className="flex items-center gap-3 mb-4">
+                   <span className="px-3 py-1 bg-slate-50 text-slate-400 rounded-lg text-[10px] font-bold uppercase tracking-widest border border-slate-100">
                     Lớp {topic.grade}
-                  </div>
+                  </span>
                 </div>
                 
-                <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2 min-h-[3rem] font-outfit">
+                <h3 className="text-xl font-bold text-slate-800 group-hover:text-accent transition-colors leading-snug">
                   {topic.title}
                 </h3>
                 
-                <div className="mt-6 flex items-center justify-between">
-                  <span className="text-xs text-gray-400 font-medium">{topic._count.lessons} bài học</span>
-                  <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
-                    <ChevronRight size={18} />
+                <div className="mt-8 flex items-center justify-between">
+                  <span className="text-sm text-slate-400">{topic._count.lessons} bài học</span>
+                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-300 group-hover:bg-accent group-hover:text-white transition-all">
+                    <ChevronRight size={20} />
                   </div>
                 </div>
               </Link>
@@ -140,26 +137,27 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Quick Actions / Recent */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-bold text-gray-900 font-outfit">Phím tắt nhanh</h2>
-          <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-indigo-200">
-            <Zap className="mb-4 text-yellow-300" size={32} />
-            <h3 className="text-xl font-bold mb-2 font-outfit">Chế độ luyện tập AI</h3>
-            <p className="text-indigo-100 text-sm leading-relaxed mb-6">
-               Hệ thống sẽ chọn các câu hỏi bạn hay sai nhất để luyện tập lại.
+        {/* Sidebar Actions */}
+        <div className="space-y-8">
+          <div className="bg-slate-900 rounded-[2.5rem] p-10 text-white relative overflow-hidden group shadow-2xl shadow-slate-200">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-accent/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-700"></div>
+            
+            <Zap className="mb-6 text-accent" size={32} />
+            <h3 className="text-2xl font-bold mb-3">Luyện tập AI</h3>
+            <p className="text-slate-400 text-sm leading-relaxed mb-8">
+               Hệ thống tự động chọn các kiến thức bạn còn yếu để ôn luyện.
             </p>
-            <button className="w-full py-3 bg-white text-indigo-600 rounded-[1.25rem] text-sm font-bold hover:bg-indigo-50 transition-all active:scale-[0.98] shadow-lg shadow-indigo-900/20">
-              Bắt đầu ngay
+            <button className="w-full py-4 bg-white text-slate-900 rounded-2xl text-sm font-bold hover:bg-accent hover:text-white transition-all active:scale-[0.98]">
+              Bắt đầu luyện tập
             </button>
           </div>
 
-          <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
-             <h3 className="font-bold text-gray-900 mb-6 font-outfit">Thành tích gần đây</h3>
-             <div className="space-y-6">
-                <AchievementItem icon="🔥" label="Chuỗi 3 ngày" sub="Học liên tiếp 3 ngày" />
-                <AchievementItem icon="🎯" label="Xạ thủ" sub="Đạt 100% trong bài Unit 1" />
-                <AchievementItem icon="💎" label="Người mới" sub="Hoàn thành bài học đầu tiên" />
+          <div className="minimal-card p-10">
+             <h3 className="text-lg font-bold text-slate-900 mb-8 border-b border-slate-50 pb-4">Thành tích</h3>
+             <div className="space-y-8">
+                <AchievementItem icon="🔥" label="Chuỗi 3 ngày" sub="Gần đây nhất" />
+                <AchievementItem icon="🎯" label="Xạ thủ" sub="Đúng 100% bài Unit 1" />
+                <AchievementItem icon="💎" label="Người mới" sub="Học bài đầu tiên" />
              </div>
           </div>
         </div>
@@ -168,28 +166,33 @@ export default async function DashboardPage() {
   )
 }
 
-function StatCard({ icon, label, value, sub, color, action }: {
+function StatCard({ icon, label, value, sub, variant, action }: {
   icon: React.ReactNode
   label: string
   value: string
   sub: string
-  color: string
+  variant: 'blue' | 'orange' | 'green' | 'yellow'
   action?: React.ReactNode
 }) {
+  const variants = {
+    blue: "text-blue-500 bg-blue-50",
+    orange: "text-orange-500 bg-orange-50",
+    green: "text-green-500 bg-green-50",
+    yellow: "text-yellow-500 bg-yellow-50",
+  }
+
   return (
-    <div className="bg-white rounded-[2rem] border border-gray-100 p-6 shadow-sm hover:shadow-xl hover:shadow-gray-100/50 transition-all duration-300">
-      <div className="flex flex-col gap-4">
-        <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center", color)}>
-          {icon}
-        </div>
-        <div>
-          <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">{label}</span>
-          <p className="text-2xl font-black text-gray-900 mt-1 font-outfit tracking-tight">{value}</p>
-        </div>
-        <div className="flex items-center justify-between pt-2 border-t border-gray-50">
-          <span className="text-xs text-gray-400 font-medium">{sub}</span>
-          {action && <div className="text-xs">{action}</div>}
-        </div>
+    <div className="minimal-card p-6 space-y-4">
+      <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", variants[variant])}>
+        {icon}
+      </div>
+      <div>
+        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{label}</span>
+        <p className="text-2xl font-bold text-slate-900 mt-1">{value}</p>
+      </div>
+      <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+        <span className="text-xs text-slate-400 font-medium">{sub}</span>
+        {action && <div className="text-xs font-bold">{action}</div>}
       </div>
     </div>
   )
@@ -197,13 +200,13 @@ function StatCard({ icon, label, value, sub, color, action }: {
 
 function AchievementItem({ icon, label, sub }: { icon: string, label: string, sub: string }) {
   return (
-    <div className="flex items-center gap-4 group cursor-pointer">
-      <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform shadow-sm">
+    <div className="flex items-center gap-5 group cursor-pointer">
+      <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform shadow-sm border border-slate-100">
         {icon}
       </div>
       <div>
-        <p className="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{label}</p>
-        <p className="text-[0.7rem] text-gray-400 font-medium">{sub}</p>
+        <p className="text-sm font-bold text-slate-900 group-hover:text-accent transition-colors">{label}</p>
+        <p className="text-[11px] text-slate-400 font-medium mt-0.5">{sub}</p>
       </div>
     </div>
   )

@@ -8,12 +8,12 @@ export default auth((req) => {
   const { pathname } = req.nextUrl
   const session = req.auth
 
-  // Chưa đăng nhập → redirect về login
+  // Chưa đăng nhập → redirect về login khi vào các trang yêu cầu auth
   if (!session) {
-    if (pathname.startsWith('/dashboard') ||
-      pathname.startsWith('/learn') ||
-      pathname.startsWith('/teacher') ||
-      pathname.startsWith('/admin')) {
+    const protectedPaths = ['/dashboard', '/learn', '/flashcards', '/practice', '/exam', '/teacher', '/admin']
+    const isProtected = protectedPaths.some(path => pathname.startsWith(path))
+    
+    if (isProtected) {
       return NextResponse.redirect(new URL('/login', req.url))
     }
   }

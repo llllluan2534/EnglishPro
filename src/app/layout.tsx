@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className={`${inter.variable} ${outfit.variable} h-full antialiased`}>
-      <body className="font-sans min-h-full flex flex-col bg-[#FDFDFF] text-gray-900">
+      <body className="min-h-full flex flex-col selection:bg-accent/10 selection:text-accent">
         <SessionProvider>
           <QueryProvider>
             {children}

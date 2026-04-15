@@ -2,7 +2,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { calculateNextReview } from '@/lib/spaced-repetition'
-import { redis } from '@/lib/redis'
+import { addXP, updateStreak } from '@/lib/gamification'
 import { z } from 'zod'
 
 const reviewSchema = z.object({
@@ -12,102 +12,84 @@ const reviewSchema = z.object({
 
 export async function POST(req: NextRequest) {
   const session = await auth()
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const body = await req.json()
-  const parsed = reviewSchema.safeParse(body)
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid data' }, { status: 400 })
-
-  const { vocabularyId, quality } = parsed.data
-  const userId = session.user.id
-
-  const existing = await prisma.flashcardReview.findUnique({
-    where: { userId_vocabularyId: { userId, vocabularyId } },
-  })
-
-  const currentCard = existing ? {
-    easeFactor: existing.easeFactor,
-    interval: existing.interval,
-    repetitions: existing.repetitions,
-    nextReviewAt: existing.nextReviewAt,
-  } : {
-    easeFactor: 2.5,
-    interval: 0,
-    repetitions: 0,
-    nextReviewAt: new Date(),
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const updated = calculateNextReview(currentCard, quality)
-
-  const saved = await prisma.flashcardReview.upsert({
-    where: { userId_vocabularyId: { userId, vocabularyId } },
-    update: {
-      ...updated,
-      lastQuality: quality,
-      reviewCount: { increment: 1 },
-    },
-    create: {
-      userId,
-      vocabularyId,
-      ...updated,
-      lastQuality: quality,
-      reviewCount: 1,
-    },
-  })
-
-  if (quality >= 3) {
-    const xpAmount = quality >= 4 ? 5 : 3
-    await Promise.all([
-      prisma.userXP.upsert({
-        where: { userId },
-        update: {
-          totalXP: { increment: xpAmount },
-          weeklyXP: { increment: xpAmount },
-          monthlyXP: { increment: xpAmount },
-        },
-        create: { userId, totalXP: xpAmount, weeklyXP: xpAmount, monthlyXP: xpAmount },
-      }),
-      updateStreak(userId),
-      redis.zincrby('leaderboard:weekly', xpAmount, userId),
-    ])
-  }
-
-  return NextResponse.json({ card: saved, nextReviewAt: updated.nextReviewAt })
-}
-
-async function updateStreak(userId: string) {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const streak = await prisma.streak.findUnique({ where: { userId } })
-  if (!streak) return
-
-  const lastStudy = streak.lastStudyDate ? new Date(streak.lastStudyDate) : null
-
-  if (lastStudy) {
-    lastStudy.setHours(0, 0, 0, 0)
-    const diffDays = Math.round((today.getTime() - lastStudy.getTime()) / (1000 * 60 * 60 * 24))
-
-    if (diffDays === 0) return
-    if (diffDays === 1) {
-      await prisma.streak.update({
-        where: { userId },
-        data: {
-          currentStreak: { increment: 1 },
-          longestStreak: { increment: streak.currentStreak + 1 > streak.longestStreak ? 1 : 0 },
-          lastStudyDate: new Date(),
-        },
-      })
-    } else {
-      await prisma.streak.update({
-        where: { userId },
-        data: { currentStreak: 1, lastStudyDate: new Date() },
-      })
+  try {
+    const body = await req.json()
+    const parsed = reviewSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Invalid data' }, { status: 400 })
     }
-  } else {
-    await prisma.streak.update({
-      where: { userId },
-      data: { currentStreak: 1, lastStudyDate: new Date() },
+
+    const { vocabularyId, quality } = parsed.data
+    const userId = session.user.id
+
+    // 1. Lấy thông tin review hiện tại
+    const existing = await prisma.flashcardReview.findUnique({
+      where: {
+        userId_vocabularyId: {
+          userId,
+          vocabularyId,
+        },
+      },
     })
+
+    const currentCard = existing ? {
+      easeFactor: existing.easeFactor,
+      interval: existing.interval,
+      repetitions: existing.repetitions,
+      nextReviewAt: existing.nextReviewAt,
+    } : {
+      easeFactor: 2.5,
+      interval: 0,
+      repetitions: 0,
+      nextReviewAt: new Date(),
+    }
+
+    // 2. Tính toán lịch review tiếp theo theo SM-2
+    const updated = calculateNextReview(currentCard, quality)
+
+    // 3. Lưu vào DB
+    const saved = await prisma.flashcardReview.upsert({
+      where: {
+        userId_vocabularyId: {
+          userId,
+          vocabularyId,
+        },
+      },
+      update: {
+        ...updated,
+        lastQuality: quality,
+        reviewCount: { increment: 1 },
+      },
+      create: {
+        userId,
+        vocabularyId,
+        ...updated,
+        lastQuality: quality,
+        reviewCount: 1,
+      },
+    })
+
+    // 4. Cộng XP và cập nhật streak nếu nhớ được bài (quality >= 3)
+    if (quality >= 3) {
+      let xpAction: 'FLASHCARD_CORRECT' | 'FLASHCARD_EASY' | 'FLASHCARD_HARD' = 'FLASHCARD_CORRECT'
+      
+      if (quality === 5) xpAction = 'FLASHCARD_EASY'
+      if (quality === 3) xpAction = 'FLASHCARD_HARD'
+
+      await addXP(userId, xpAction, vocabularyId)
+      await updateStreak(userId)
+    }
+
+    return NextResponse.json({ 
+      card: saved, 
+      nextReviewAt: updated.nextReviewAt 
+    })
+  } catch (error) {
+    console.error('[FLASHCARD_REVIEW_POST]', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
   }
 }

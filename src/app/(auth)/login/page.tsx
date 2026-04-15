@@ -45,56 +45,50 @@ function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <div className="space-y-2">
+        <label className="text-[13px] font-bold text-slate-400 uppercase tracking-wider ml-1">Email</label>
         <input
           {...register('email')}
           type="email"
           autoComplete="email"
-          placeholder="email@example.com"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+          placeholder="name@email.com"
+          className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-slate-300"
         />
-        {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
+        {errors.email && <p className="text-red-500 text-[11px] font-medium ml-1">{errors.email.message}</p>}
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
+      <div className="space-y-2">
+        <div className="flex justify-between items-center px-1">
+          <label className="text-[13px] font-bold text-slate-400 uppercase tracking-wider">Mật khẩu</label>
+          <button type="button" className="text-[11px] font-bold text-accent hover:underline">Quên mật khẩu?</button>
+        </div>
         <input
           {...register('password')}
           type="password"
           autoComplete="current-password"
           placeholder="••••••••"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+          className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl text-sm focus:ring-2 focus:ring-accent/20 transition-all placeholder:text-slate-300"
         />
-        {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
+        {errors.password && <p className="text-red-500 text-[11px] font-medium ml-1">{errors.password.message}</p>}
       </div>
 
       {error && (
-        <p className="text-red-500 text-sm bg-red-50 px-3 py-2 rounded-lg border border-red-100">{error}</p>
+        <p className="text-red-500 text-xs bg-red-50 px-4 py-3 rounded-xl border border-red-100 font-medium">{error}</p>
       )}
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-all shadow-md shadow-blue-200"
+        className="w-full py-4 bg-foreground text-background rounded-2xl text-sm font-bold hover:shadow-xl hover:shadow-slate-200 transition-all active:scale-[0.98] disabled:opacity-50"
       >
-        {isSubmitting ? 'Đang đăng nhập...' : 'Đăng nhập'}
+        {isSubmitting ? 'Đang xử lý...' : 'Đăng nhập'}
       </button>
 
-      <div className="relative my-6">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-100"></div>
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-white px-2 text-gray-400">Hoặc</span>
-        </div>
-      </div>
-
-      <p className="text-center text-sm text-gray-500">
+      <p className="text-center text-sm text-slate-400 font-medium pt-4">
         Chưa có tài khoản?{' '}
-        <Link href="/register" className="text-blue-600 hover:underline font-medium">
-          Đăng ký ngay
+        <Link href="/register" className="text-slate-900 hover:text-accent font-bold transition-colors">
+          Đăng ký miễn phí
         </Link>
       </p>
     </form>
@@ -103,19 +97,21 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl shadow-blue-100/50 border border-gray-100 p-8 sm:p-10">
-        <div className="text-center mb-10">
-          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-200">
-            <span className="text-white text-2xl font-bold">EP</span>
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
+      <div className="w-full max-w-[440px] space-y-12">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-xl shadow-slate-200 text-white font-bold text-xs">
+            EP
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 font-outfit">EnglishPro</h1>
-          <p className="text-gray-500 text-sm mt-2">Chinh phục tiếng Anh cấp 3 cùng lộ trình cá nhân hóa</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Mừng bạn quay lại</h1>
+          <p className="text-slate-400 text-lg font-medium">Tiếp tục hành trình chinh phục tiếng Anh</p>
         </div>
 
-        <Suspense fallback={<div className="h-64 flex items-center justify-center text-gray-400">Đang tải...</div>}>
-          <LoginForm />
-        </Suspense>
+        <div className="bg-white">
+          <Suspense fallback={<div className="h-64 flex items-center justify-center text-slate-300">Đang tải...</div>}>
+            <LoginForm />
+          </Suspense>
+        </div>
       </div>
     </div>
   )
