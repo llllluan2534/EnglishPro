@@ -20,7 +20,7 @@ export default async function TeacherDashboard() {
             Khu vực Giáo viên
           </h1>
           <p className="text-slate-500 text-lg font-medium">
-            Chào mừng quay lại, {session.user.name}.
+            Chào mừng quay lại, {session.user.name ?? 'Giáo viên'}.
           </p>
         </div>
       </div>

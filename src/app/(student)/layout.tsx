@@ -1,6 +1,7 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import StudentSidebar from '@/components/layout/StudentSidebar'
+import StudentPageWrapper from '@/components/layout/StudentPageWrapper'
 
 export default async function StudentLayout({
   children,
@@ -25,12 +26,12 @@ export default async function StudentLayout({
   }
 
   return (
-    <div className="flex h-screen bg-[#FDFDFF]">
+    <div className="flex h-screen bg-[#FBF6EC]">
       <StudentSidebar />
       <main className="flex-1 overflow-y-auto">
-        <div className="max-w-7xl mx-auto px-6 py-10 sm:px-10">
+        <StudentPageWrapper>
           {children}
-        </div>
+        </StudentPageWrapper>
       </main>
     </div>
   )

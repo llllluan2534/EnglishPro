@@ -1,142 +1,125 @@
-import { auth } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
-import { Trophy, Medal, Star, Flame, Crown } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import Link from 'next/link'
 
-async function getLeaderboard() {
-  const topUsers = await prisma.userXP.findMany({
-    orderBy: { totalXP: 'desc' },
-    take: 10,
-    include: {
-      user: {
-        select: {
-          name: true,
-          image: true,
-          role: true,
-        },
-      },
-    },
-  })
-
-  return topUsers
-}
-
-export default async function LeaderboardPage() {
-  const session = await auth()
-  const topUsers = await getLeaderboard()
-  
-  const currentUserRank = session?.user?.id 
-    ? topUsers.findIndex(u => u.userId === session.user.id) + 1 
-    : 0
-
+export default function LeaderboardPage() {
   return (
-    <div className="max-w-4xl mx-auto space-y-12 py-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-        <div className="space-y-2">
-          <h1 className="text-4xl font-bold text-gray-900 font-outfit">Bảng xếp hạng</h1>
-          <p className="text-gray-500 text-lg">
-             Cùng xem ai là người chăm chỉ nhất toàn hệ thống nhé!
-          </p>
-        </div>
+    <>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        :root{
+          --paper:#FBF6EC; --paper-line:#E7DEC9; --ink:#1D2B4F; --ink-soft:#6B7A94;
+          --red:#C1432E; --gold:#E3A73B; --green:#4C7A6B; --card:#FFFDF7;
+        }
         
-        <div className="bg-yellow-50 px-6 py-3 rounded-2xl border border-yellow-100 flex items-center gap-3">
-          <Trophy size={24} className="text-yellow-500" />
-          <div className="text-sm font-black text-yellow-700 uppercase tracking-widest">Global Top 10</div>
-        </div>
-      </div>
+        .studio-leaderboard {
+          background:var(--paper);
+          background-image:linear-gradient(var(--paper-line) 1px, transparent 1px);
+          background-size:100% 34px;
+          font-family:'Inter',sans-serif;
+          color:var(--ink);
+          padding:0 0 80px;
+          min-height: 100vh;
+        }
+        .studio-leaderboard * { box-sizing:border-box; }
+        
+        .studio-leaderboard .page {
+          max-width:1180px;
+          margin:0 auto;
+          padding:40px 32px 0 96px;
+          position:relative;
+        }
+        .studio-leaderboard .margin-rule {
+          position:absolute; left:56px; top:0; bottom:0; width:2px; background:var(--red); opacity:.55;
+        }
+        .studio-leaderboard .margin-rule::before {
+          content:''; position:absolute; left:-5px; top:0; width:12px; height:12px; border-radius:50%; background:var(--red);
+        }
+        .studio-leaderboard .eyebrow {
+          font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--red); font-weight:700; display:flex; align-items:center; gap:10px; margin-bottom:10px;
+        }
+        .studio-leaderboard .eyebrow::after {
+          content:''; flex:1; height:1px; background:repeating-linear-gradient(90deg,var(--ink-soft) 0 6px, transparent 6px 12px); opacity:.5;
+        }
+        .studio-leaderboard .page-head { display:flex; justify-content:space-between; align-items:flex-end; gap:30px; padding-bottom:32px; margin-bottom:44px; border-bottom:2px dashed #D8CDAE; flex-wrap:wrap;}
+        .studio-leaderboard .page-head h1 { font-family:'Fraunces',serif; font-weight:600; font-size:38px; margin:0 0 12px; }
+        .studio-leaderboard .page-head h1 em { font-style:italic; color:var(--red); }
+        .studio-leaderboard .page-head p { font-size:15px; color:var(--ink-soft); max-width:500px; line-height:1.6; margin:0; }
+        .studio-leaderboard .scope-ticket { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; border:2px solid var(--ink); padding:10px 18px; letter-spacing:.05em; white-space:nowrap;}
 
-      {/* Top 3 Podium */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-end pt-12">
-        {/* Rank 2 */}
-        {topUsers[1] && (
-          <div className="order-2 md:order-1 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-blue-900/5 text-center space-y-4">
-             <div className="relative inline-block">
-                <div className="w-20 h-20 rounded-3xl bg-slate-100 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
-                   {topUsers[1].user.image ? <img src={topUsers[1].user.image} alt={topUsers[1].user.name} /> : <div className="text-2xl font-bold text-slate-400">{topUsers[1].user.name[0]}</div>}
-                </div>
-                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-slate-300 rounded-full flex items-center justify-center text-white border-4 border-white font-bold">2</div>
-             </div>
-             <div>
-                <h3 className="font-bold text-gray-900 truncate">{topUsers[1].user.name}</h3>
-                <p className="text-sm font-black text-blue-600 uppercase tracking-widest">{topUsers[1].totalXP} XP</p>
-             </div>
-          </div>
-        )}
+        /* PODIUM */
+        .studio-leaderboard .podium { display:grid; grid-template-columns:1fr 1.15fr 1fr; gap:20px; align-items:end; margin-bottom:56px; }
+        .studio-leaderboard .p-card { background:var(--card); border:1px solid #E4D9BE; padding:26px 20px; text-align:center; position:relative;}
+        .studio-leaderboard .p-card .rank-stamp {
+          width:56px; height:56px; border-radius:50%; border:3px solid var(--ink-soft); color:var(--ink-soft); margin:0 auto 14px;
+          display:flex; align-items:center; justify-content:center; font-family:'Fraunces',serif; font-weight:700; font-size:22px; transform:rotate(-6deg);
+        }
+        .studio-leaderboard .p-card.first { border:2px solid var(--red); padding-top:38px; }
+        .studio-leaderboard .p-card.first .rank-stamp { width:72px; height:72px; border-color:var(--red); color:var(--red); font-size:28px;}
+        .studio-leaderboard .p-card h3 { font-family:'Fraunces',serif; font-size:17px; margin:0 0 6px;}
+        .studio-leaderboard .p-card .xp { font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--red); font-weight:700;}
 
-        {/* Rank 1 */}
-        {topUsers[0] && (
-          <div className="order-1 md:order-2 bg-slate-900 p-10 rounded-[3rem] shadow-2xl shadow-blue-200 text-center space-y-6 scale-110 relative overflow-hidden">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl -mr-16 -mt-16"></div>
-             <div className="relative inline-block">
-                <div className="w-24 h-24 rounded-[2rem] bg-yellow-400 flex items-center justify-center overflow-hidden border-4 border-yellow-300 shadow-2xl">
-                   {topUsers[0].user.image ? <img src={topUsers[0].user.image} alt={topUsers[0].user.name} /> : <div className="text-3xl font-bold text-white uppercase">{topUsers[0].user.name[0]}</div>}
-                </div>
-                <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-yellow-400 animate-bounce">
-                   <Crown size={32} fill="currentColor" />
-                </div>
-                <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center text-white border-4 border-slate-900 font-bold text-lg">1</div>
-             </div>
-             <div>
-                <h3 className="text-xl font-bold text-white truncate">{topUsers[0].user.name}</h3>
-                <p className="text-base font-black text-blue-400 uppercase tracking-widest">{topUsers[0].totalXP} XP</p>
-             </div>
-          </div>
-        )}
+        /* TABLE */
+        .studio-leaderboard .board { background:var(--card); border:1px solid #E4D9BE; }
+        .studio-leaderboard .board-head { display:flex; justify-content:space-between; align-items:center; padding:22px 28px; border-bottom:2px dashed #D8CDAE;}
+        .studio-leaderboard .board-head h2 { font-family:'Fraunces',serif; font-size:21px; margin:0;}
+        .studio-leaderboard .you-badge { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:var(--red); background:#F3DAD3; padding:6px 12px;}
+        .studio-leaderboard .row { display:flex; align-items:center; gap:20px; padding:16px 28px; border-bottom:1px dashed #E4D9BE; }
+        .studio-leaderboard .row:last-child { border-bottom:none; }
+        .studio-leaderboard .row.you { background:#FDF3EC; }
+        .studio-leaderboard .row .rank { font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--paper-line); font-size:18px; width:34px; }
+        .studio-leaderboard .row .name { flex:1; font-weight:600; font-size:14px;}
+        .studio-leaderboard .row .lvl { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-soft);}
+        .studio-leaderboard .row .xp { font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--ink); font-size:14px; text-align:right; width:90px;}
 
-        {/* Rank 3 */}
-        {topUsers[2] && (
-          <div className="order-3 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-blue-900/5 text-center space-y-4">
-             <div className="relative inline-block">
-                <div className="w-20 h-20 rounded-3xl bg-orange-50 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
-                   {topUsers[2].user.image ? <img src={topUsers[2].user.image} alt={topUsers[2].user.name} /> : <div className="text-2xl font-bold text-orange-300">{topUsers[2].user.name[0]}</div>}
-                </div>
-                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-orange-300 rounded-full flex items-center justify-center text-white border-4 border-white font-bold">3</div>
-             </div>
-             <div>
-                <h3 className="font-bold text-gray-900 truncate">{topUsers[2].user.name}</h3>
-                <p className="text-sm font-black text-blue-600 uppercase tracking-widest">{topUsers[2].totalXP} XP</p>
-             </div>
-          </div>
-        )}
-      </div>
+        @media (max-width:860px){
+          .studio-leaderboard .page {padding-left:56px;} .studio-leaderboard .margin-rule {left:24px;}
+          .studio-leaderboard .podium {grid-template-columns:1fr; } .studio-leaderboard .p-card.first {order:-1;}
+        }
+        `
+      }} />
 
-      {/* Leaderboard Table */}
-      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-8 border-b border-gray-50 flex justify-between items-center">
-           <h2 className="font-bold text-gray-900">Danh sách xếp hạng</h2>
-           {currentUserRank > 0 && (
-              <span className="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">Xếp hạng của bạn: #{currentUserRank}</span>
-           )}
-        </div>
-        <div className="divide-y divide-gray-50">
-          {topUsers.slice(3).map((u, index) => (
-            <div 
-              key={u.userId}
-              className={cn(
-                "flex items-center gap-6 p-6 hover:bg-gray-50 transition-colors",
-                u.userId === session?.user?.id && "bg-blue-50/50"
-              )}
-            >
-              <div className="w-10 text-center font-black text-gray-300">#{index + 4}</div>
-              <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center text-gray-400 font-bold overflow-hidden border border-white">
-                {u.user.image ? <img src={u.user.image} alt={u.user.name} /> : u.user.name[0]}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-gray-900 truncate">{u.user.name}</h4>
-                <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{u.level} LVL</p>
-              </div>
-              <div className="text-right shrink-0">
-                <p className="font-black text-blue-600 uppercase tracking-tighter">{u.totalXP} XP</p>
-              </div>
+      <div className="studio-leaderboard">
+        <div className="page">
+          <div className="margin-rule"></div>
+          <div className="page-head">
+            <div>
+              <div className="eyebrow">Sổ điểm danh dự</div>
+              <h1>Bảng xếp <em>hạng</em></h1>
+              <p>Cùng xem ai là người chăm chỉ nhất toàn hệ thống tuần này.</p>
             </div>
-          ))}
-          
-          {topUsers.length === 0 && (
-             <div className="py-20 text-center text-gray-400 font-medium">Chưa có dữ liệu xếp hạng.</div>
-          )}
+            <div className="scope-ticket">TOP 10 &middot; TOÀN TRƯỜNG</div>
+          </div>
+
+          <div className="podium">
+            <div className="p-card">
+              <div className="rank-stamp">2</div>
+              <h3>Bảo Trân</h3>
+              <div className="xp">2,140 XP</div>
+            </div>
+            <div className="p-card first">
+              <div className="rank-stamp">1</div>
+              <h3>Minh Khang</h3>
+              <div className="xp">2,480 XP</div>
+            </div>
+            <div className="p-card">
+              <div className="rank-stamp">3</div>
+              <h3>Gia Hân</h3>
+              <div className="xp">1,960 XP</div>
+            </div>
+          </div>
+
+          <div className="board">
+            <div className="board-head">
+              <h2>Danh sách xếp hạng</h2>
+              <span className="you-badge">Bạn đang xếp #12</span>
+            </div>
+            <div className="row"><span className="rank">04</span><span className="name">Đức Anh</span><span className="lvl">LV 14</span><span className="xp">1,720 XP</span></div>
+            <div className="row"><span className="rank">05</span><span className="name">Thảo Vy</span><span className="lvl">LV 13</span><span className="xp">1,655 XP</span></div>
+            <div className="row"><span className="rank">06</span><span className="name">Quang Huy</span><span className="lvl">LV 13</span><span className="xp">1,590 XP</span></div>
+            <div className="row"><span className="rank">07</span><span className="name">Ngọc Ánh</span><span className="lvl">LV 12</span><span className="xp">1,510 XP</span></div>
+            <div className="row you"><span className="rank">12</span><span className="name">Bạn (Minh)</span><span className="lvl">LV 12</span><span className="xp">1,180 XP</span></div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }

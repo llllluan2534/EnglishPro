@@ -2,8 +2,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronLeft, Play, CheckCircle2, Lock, Clock, BookOpen } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Play, CheckCircle2 } from 'lucide-react'
 
 async function getTopicWithLessons(topicId: string, userId: string) {
   const [topic, lessonProgress] = await Promise.all([
@@ -38,12 +37,13 @@ async function getTopicWithLessons(topicId: string, userId: string) {
 export default async function TopicPage({
   params,
 }: {
-  params: { topicId: string }
+  params: Promise<{ topicId: string }> | { topicId: string }
 }) {
   const session = await auth()
   if (!session) return null
 
-  const topicId = params.topicId
+  const resolvedParams = await Promise.resolve(params)
+  const topicId = resolvedParams.topicId
   const topic = await getTopicWithLessons(topicId, session.user.id)
 
   if (!topic) {
@@ -56,112 +56,106 @@ export default async function TopicPage({
     : 0
 
   return (
-    <div className="max-w-5xl mx-auto space-y-10 py-6">
-      {/* Back Button & Header */}
-      <div className="space-y-6">
-        <Link 
-          href="/learn" 
-          className="inline-flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-blue-600 transition-colors bg-gray-50 px-4 py-2 rounded-xl border border-gray-100"
-        >
-          <ChevronLeft size={16} />
-          Quay lại lộ trình
-        </Link>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-gray-900 font-outfit">{topic.title}</h1>
-            <p className="text-gray-500 text-lg max-w-2xl">{topic.description}</p>
-          </div>
-          <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm min-w-[200px]">
-            <div className="flex justify-between text-xs font-black uppercase tracking-widest text-gray-400 mb-2">
-              <span>Tiến độ</span>
-              <span>{progressPercent}%</span>
-            </div>
-            <div className="w-full h-2 bg-gray-50 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-blue-500 rounded-full transition-all duration-1000"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
+    <>
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        :root{
+          --paper:#FBF6EC; --paper-line:#E7DEC9; --ink:#1D2B4F; --ink-soft:#6B7A94;
+          --red:#C1432E; --gold:#E3A73B; --green:#4C7A6B; --card:#FFFDF7;
+        }
+        
+        .studio-topic {
+          background:var(--paper);
+          background-image:linear-gradient(var(--paper-line) 1px, transparent 1px);
+          background-size:100% 34px;
+          font-family:'Inter',sans-serif;
+          color:var(--ink);
+          padding:0 0 80px;
+          min-height: 100vh;
+        }
+        .studio-topic * { box-sizing:border-box; }
+        
+        .studio-topic .page {
+          max-width:1180px;
+          margin:0 auto;
+          padding:40px 32px 0 96px;
+          position:relative;
+        }
+        .studio-topic .margin-rule {
+          position:absolute; left:56px; top:0; bottom:0; width:2px; background:var(--red); opacity:.55;
+        }
+        .studio-topic .margin-rule::before {
+          content:''; position:absolute; left:-5px; top:0; width:12px; height:12px; border-radius:50%; background:var(--red);
+        }
+        .studio-topic .eyebrow {
+          font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--red); font-weight:700; display:flex; align-items:center; gap:10px; margin-bottom:10px;
+        }
+        .studio-topic .eyebrow::after {
+          content:''; flex:1; height:1px; background:repeating-linear-gradient(90deg,var(--ink-soft) 0 6px, transparent 6px 12px); opacity:.5;
+        }
+        .studio-topic .page-head { display:flex; justify-content:space-between; align-items:flex-end; gap:30px; padding-bottom:32px; margin-bottom:44px; border-bottom:2px dashed #D8CDAE; flex-wrap:wrap;}
+        .studio-topic .page-head h1 { font-family:'Fraunces',serif; font-weight:600; font-size:38px; margin:0 0 12px; }
+        .studio-topic .page-head h1 em { font-style:italic; color:var(--red); }
+        .studio-topic .page-head p { font-size:15px; color:var(--ink-soft); max-width:500px; line-height:1.6; margin:0; }
+        .studio-topic .progress-ticket { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; border:2px solid var(--ink); padding:10px 18px; letter-spacing:.05em; white-space:nowrap; background:var(--card);}
 
-      {/* Lessons List */}
-      <div className="space-y-4">
-        <h2 className="text-xl font-bold text-gray-900 px-2">Danh sách bài học</h2>
-        <div className="grid gap-4">
-          {topic.lessons.map((lesson, index) => (
-            <Link
-              key={lesson.id}
-              href={`/learn/${topicId}/${lesson.id}`}
-              className={cn(
-                "group flex items-center gap-6 p-6 rounded-[2rem] border transition-all duration-300",
-                lesson.isCompleted 
-                  ? "bg-white border-blue-100 shadow-sm" 
-                  : "bg-white border-gray-100 hover:border-blue-200 hover:shadow-xl hover:shadow-blue-900/5"
-              )}
-            >
-              {/* index badge */}
-              <div className={cn(
-                "w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black shrink-0 transition-colors",
-                lesson.isCompleted
-                  ? "bg-blue-50 text-blue-600"
-                  : "bg-gray-50 text-gray-400 group-hover:bg-blue-600 group-hover:text-white"
-              )}>
-                {index + 1}
-              </div>
+        /* TABLE */
+        .studio-topic .board { background:var(--card); border:1px solid #E4D9BE; }
+        .studio-topic .board-head { display:flex; justify-content:space-between; align-items:center; padding:22px 28px; border-bottom:2px dashed #D8CDAE;}
+        .studio-topic .board-head h2 { font-family:'Fraunces',serif; font-size:21px; margin:0;}
+        .studio-topic .back-badge { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:var(--ink-soft); text-decoration:none; padding:6px 12px; border:1px solid var(--ink-soft); transition: all 0.2s;}
+        .studio-topic .back-badge:hover { background:var(--ink-soft); color:var(--paper); }
+        .studio-topic .row { display:flex; align-items:center; gap:20px; padding:16px 28px; border-bottom:1px dashed #E4D9BE; text-decoration:none; color:inherit; transition: background 0.2s;}
+        .studio-topic .row:last-child { border-bottom:none; }
+        .studio-topic .row:hover { background:#fdfaf0; }
+        .studio-topic .row.completed { background:#FDF3EC; }
+        .studio-topic .row .rank { font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--paper-line); font-size:18px; width:34px; }
+        .studio-topic .row .name { flex:1; font-weight:600; font-size:15px;}
+        .studio-topic .row .lvl { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-soft); text-transform:uppercase;}
+        .studio-topic .row .action { font-family:'JetBrains Mono',monospace; font-weight:700; font-size:14px; text-align:right; width:40px; display:flex; justify-content:flex-end;}
 
-              {/* info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                    {lesson.skill}
+        @media (max-width:860px){
+          .studio-topic .page {padding-left:56px;} .studio-topic .margin-rule {left:24px;}
+        }
+        `
+      }} />
+
+      <div className="studio-topic">
+        <div className="page">
+          <div className="margin-rule"></div>
+          <div className="page-head">
+            <div>
+              <div className="eyebrow">Chủ đề bài học</div>
+              <h1>{topic.title}</h1>
+              <p>{topic.description}</p>
+            </div>
+            <div className="progress-ticket">HOÀN THÀNH &middot; {progressPercent}%</div>
+          </div>
+
+          <div className="board">
+            <div className="board-head">
+              <h2>Mục lục bài học</h2>
+              <Link href="/learn" className="back-badge">&larr; Quay lại</Link>
+            </div>
+            {topic.lessons.length > 0 ? (
+              topic.lessons.map((lesson, index) => (
+                <Link key={lesson.id} href={`/learn/${topicId}/${lesson.id}`} className={`row ${lesson.isCompleted ? 'completed' : ''}`}>
+                  <span className="rank">{String(index + 1).padStart(2, '0')}</span>
+                  <span className="name" style={{ fontFamily: "'Fraunces', serif" }}>{lesson.title}</span>
+                  <span className="lvl">{lesson.skill}</span>
+                  <span className="action">
+                    {lesson.isCompleted ? <CheckCircle2 size={20} className="text-[#C1432E]" /> : <Play size={20} className="text-[#1D2B4F]" />}
                   </span>
-                  {lesson.isCompleted && (
-                    <span className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-green-500">
-                      <CheckCircle2 size={10} />
-                      Hoàn thành
-                    </span>
-                  )}
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 truncate font-outfit">
-                  {lesson.title}
-                </h3>
-                <div className="flex items-center gap-4 mt-2">
-                   <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400">
-                      <Clock size={14} />
-                      <span>{lesson.duration || 15} phút</span>
-                   </div>
-                   <div className="flex items-center gap-1.5 text-xs font-bold text-gray-400">
-                      <BookOpen size={14} />
-                      <span>{lesson.difficulty}</span>
-                   </div>
-                </div>
+                </Link>
+              ))
+            ) : (
+              <div style={{ padding: '40px', textAlign: 'center', color: 'var(--ink-soft)', fontStyle: 'italic', fontFamily: "'Fraunces', serif" }}>
+                Chưa có bài học nào trong chủ đề này.
               </div>
-
-              {/* action button */}
-              <div className={cn(
-                "w-12 h-12 rounded-full flex items-center justify-center transition-all",
-                lesson.isCompleted
-                  ? "text-blue-600 bg-blue-50"
-                  : "text-gray-300 group-hover:bg-blue-50 group-hover:text-blue-600"
-              )}>
-                {lesson.isCompleted ? (
-                   <CheckCircle2 size={24} />
-                ) : (
-                   <Play size={24} fill="currentColor" className="ml-1" />
-                )}
-              </div>
-            </Link>
-          ))}
-
-          {topic.lessons.length === 0 && (
-            <div className="py-20 text-center bg-gray-50 rounded-[3rem] border border-dashed border-gray-200">
-               <p className="text-gray-400 font-bold">Chưa có bài học nào trong chủ đề này.</p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
