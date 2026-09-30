@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, use, useCallback } from 'react'
+import { useState, useEffect, use, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2, ArrowLeft, Send, AlertCircle, CheckCircle2 } from 'lucide-react'
@@ -26,7 +26,7 @@ export default function ExamTakingPage({ params }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<string, any>>({})
   const [flaggedIds, setFlaggedIds] = useState<Set<string>>(new Set())
-  const [timeSpent, setTimeSpent] = useState(0)
+  const startTimeRef = useRef<number>(Date.now())
 
   const [showSubmitModal, setShowSubmitModal] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -59,6 +59,7 @@ export default function ExamTakingPage({ params }: Props) {
         })
 
         setFlatQuestions(flattened)
+        startTimeRef.current = Date.now()
       } catch (err) {
         console.error(err)
         setError('Lỗi kết nối khi tải đề thi.')
@@ -93,13 +94,15 @@ export default function ExamTakingPage({ params }: Props) {
     if (isSubmitting) return
     setIsSubmitting(true)
 
+    const actualTimeSpent = Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000))
+
     try {
       const res = await fetch(`/api/exams/${examId}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           answers,
-          timeSpent,
+          timeSpent: actualTimeSpent,
           isAutoSubmit,
         }),
       })
@@ -120,7 +123,7 @@ export default function ExamTakingPage({ params }: Props) {
       setIsSubmitting(false)
       setShowSubmitModal(false)
     }
-  }, [examId, answers, timeSpent, isSubmitting, router])
+  }, [examId, answers, isSubmitting, router])
 
   const handleTimeUp = useCallback(() => {
     toast.warning('Đã hết thời gian làm bài! Đang tự động nộp bài...')
@@ -190,7 +193,6 @@ export default function ExamTakingPage({ params }: Props) {
             <ExamTimer
               durationMinutes={exam.duration}
               onTimeUp={handleTimeUp}
-              onTick={(secondsLeft) => setTimeSpent(exam.duration * 60 - secondsLeft)}
               isPaused={isSubmitting}
             />
 

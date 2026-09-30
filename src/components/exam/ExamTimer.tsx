@@ -18,9 +18,15 @@ export default function ExamTimer({
 }: ExamTimerProps) {
   const [secondsLeft, setSecondsLeft] = useState(durationMinutes * 60)
   const isTimeUpTriggered = useRef(false)
+  const onTimeUpRef = useRef(onTimeUp)
+  onTimeUpRef.current = onTimeUp
+
+  const onTickRef = useRef(onTick)
+  onTickRef.current = onTick
 
   useEffect(() => {
     setSecondsLeft(durationMinutes * 60)
+    isTimeUpTriggered.current = false
   }, [durationMinutes])
 
   useEffect(() => {
@@ -30,20 +36,24 @@ export default function ExamTimer({
       setSecondsLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer)
-          if (!isTimeUpTriggered.current) {
-            isTimeUpTriggered.current = true
-            onTimeUp()
-          }
           return 0
         }
-        const next = prev - 1
-        onTick?.(next)
-        return next
+        return prev - 1
       })
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [isPaused, onTimeUp, onTick])
+  }, [isPaused])
+
+  // Kích hoạt onTick & onTimeUp trong effect sau khi render hoàn tất
+  useEffect(() => {
+    onTickRef.current?.(secondsLeft)
+
+    if (secondsLeft === 0 && !isTimeUpTriggered.current) {
+      isTimeUpTriggered.current = true
+      onTimeUpRef.current()
+    }
+  }, [secondsLeft])
 
   const minutes = Math.floor(secondsLeft / 60)
   const seconds = secondsLeft % 60
@@ -58,18 +68,22 @@ export default function ExamTimer({
         isCritical
           ? 'bg-[#F3DAD3] text-[#C1432E] border-[#C1432E] animate-pulse'
           : isWarning
-          ? 'bg-[#FBEACB] text-[#8A5E12] border-[#E3A73B]'
+          ? 'bg-[#FDF4E2] text-[#E3A73B] border-[#E3A73B]'
           : 'bg-[#FFFDF7] text-[#1D2B4F] border-[#1D2B4F]'
       }`}
       style={{ fontFamily: "'JetBrains Mono', monospace" }}
     >
       {isCritical ? (
-        <AlertTriangle size={18} className="text-[#C1432E] animate-bounce" />
+        <AlertTriangle size={18} className="text-[#C1432E]" />
       ) : (
-        <Clock size={18} className={isWarning ? 'text-[#E3A73B]' : 'text-[#1D2B4F]'} />
+        <Clock size={18} className="text-[#1D2B4F]" />
       )}
-      <span className="text-base tracking-wider">{formattedTime}</span>
-      {isCritical && <span className="text-xs uppercase font-sans font-bold">Sắp hết giờ!</span>}
+      <div className="flex flex-col">
+        <span className="text-[10px] uppercase tracking-wider text-[#6B7A94] leading-none mb-0.5">
+          {isCritical ? 'SẮP HẾT GIỜ!' : 'THỜI GIAN CÒN LẠI'}
+        </span>
+        <span className="text-base tracking-widest leading-none">{formattedTime}</span>
+      </div>
     </div>
   )
 }
