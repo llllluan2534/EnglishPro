@@ -4,13 +4,51 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { 
   Plus, BookOpen, Music, Mic, Globe, CheckCircle2, Clock, 
-  ChevronRight, FileVideo 
+  ChevronRight, FileVideo, Layers, ArrowRight, ExternalLink, Award 
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { Skill, ContentStatus } from '@prisma/client'
 
-async function getLessons() {
-  return prisma.lesson.findMany({
+const SKILL_META: Record<Skill, { label: string; icon: React.ReactNode; color: string; bg: string }> = {
+  READING:    { label: 'Reading (Đọc)',       icon: <BookOpen size={13} />,  color: '#1D2B4F', bg: '#DCE9E3' },
+  LISTENING:  { label: 'Listening (Nghe)',    icon: <Music size={13} />,     color: '#6B46C1', bg: '#EDE9FE' },
+  SPEAKING:   { label: 'Speaking (Nói)',      icon: <Mic size={13} />,       color: '#059669', bg: '#D1FAE5' },
+  WRITING:    { label: 'Writing (Viết)',      icon: <Globe size={13} />,     color: '#2563EB', bg: '#DBEAFE' },
+  GRAMMAR:    { label: 'Grammar (Ngữ pháp)',  icon: <BookOpen size={13} />,  color: '#C1432E', bg: '#F3DAD3' },
+  VOCABULARY: { label: 'Vocabulary (Từ vựng)',icon: <FileVideo size={13} />, color: '#D97706', bg: '#FEF3C7' },
+}
+
+const STATUS_META: Record<ContentStatus, { label: string; color: string; bg: string }> = {
+  DRAFT:     { label: 'BẢN NHÁP',     color: '#6B7A94', bg: '#FBF6EC' },
+  PENDING:   { label: 'CHỜ DUYỆT',    color: '#D97706', bg: '#FEF3C7' },
+  PUBLISHED: { label: 'ĐÃ XUẤT BẢN',  color: '#4C7A6B', bg: '#DCE9E3' },
+  ARCHIVED:  { label: 'LƯU TRỮ',      color: '#6B7A94', bg: '#E2E8F0' },
+}
+
+export default async function TeacherLessonsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ grade?: string; skill?: string }>
+}) {
+  const session = await auth()
+  if (!session || !['TEACHER', 'ADMIN'].includes(session.user.role)) {
+    redirect('/dashboard')
+  }
+
+  const resolvedSearchParams = await searchParams
+  const selectedGrade = resolvedSearchParams?.grade || 'ALL'
+  const selectedSkill = resolvedSearchParams?.skill || 'ALL'
+
+  // Build filter query
+  const whereClause: any = {}
+  if (selectedGrade !== 'ALL') {
+    whereClause.topic = { grade: parseInt(selectedGrade) }
+  }
+  if (selectedSkill !== 'ALL') {
+    whereClause.skill = selectedSkill as Skill
+  }
+
+  const lessons = await prisma.lesson.findMany({
+    where: whereClause,
     include: {
       topic: { select: { id: true, title: true, grade: true } },
       author: { select: { name: true } },
@@ -18,33 +56,14 @@ async function getLessons() {
     },
     orderBy: [{ topic: { grade: 'asc' } }, { order: 'asc' }],
   })
-}
 
-const SKILL_META: Record<Skill, { label: string; icon: React.ReactNode; color: string }> = {
-  READING:    { label: 'Đọc',     icon: <BookOpen size={13} />,  color: 'text-blue-600 bg-blue-50 border-blue-100' },
-  LISTENING:  { label: 'Nghe',    icon: <Music size={13} />,     color: 'text-purple-600 bg-purple-50 border-purple-100' },
-  SPEAKING:   { label: 'Nói',     icon: <Mic size={13} />,       color: 'text-orange-600 bg-orange-50 border-orange-100' },
-  WRITING:    { label: 'Viết',    icon: <Globe size={13} />,     color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
-  GRAMMAR:    { label: 'Ngữ pháp',icon: <BookOpen size={13} />,  color: 'text-indigo-600 bg-indigo-50 border-indigo-100' },
-  VOCABULARY: { label: 'Từ vựng', icon: <FileVideo size={13} />, color: 'text-rose-600 bg-rose-50 border-rose-100' },
-}
+  // Quick Stats
+  const totalLessons = lessons.length
+  const publishedCount = lessons.filter(l => l.status === ContentStatus.PUBLISHED).length
+  const draftCount = lessons.filter(l => l.status === ContentStatus.DRAFT).length
+  const totalQuestions = lessons.reduce((acc, l) => acc + l._count.examQuestions, 0)
 
-const STATUS_META: Record<ContentStatus, { label: string; icon: React.ReactNode; color: string }> = {
-  DRAFT:     { label: 'Nháp',         icon: <Clock size={12} />,       color: 'text-slate-500 bg-slate-100' },
-  PENDING:   { label: 'Chờ duyệt',    icon: <Clock size={12} />,       color: 'text-amber-600 bg-amber-50' },
-  PUBLISHED: { label: 'Đã xuất bản',  icon: <CheckCircle2 size={12} />,color: 'text-emerald-600 bg-emerald-50' },
-  ARCHIVED:  { label: 'Lưu trữ',      icon: <Clock size={12} />,       color: 'text-slate-400 bg-slate-50' },
-}
-
-export default async function LessonsPage() {
-  const session = await auth()
-  if (!session || !['TEACHER', 'ADMIN'].includes(session.user.role)) {
-    redirect('/dashboard')
-  }
-
-  const lessons = await getLessons()
-
-  // Nhóm theo chủ đề
+  // Group lessons by topic
   const grouped = lessons.reduce<Record<string, typeof lessons>>((acc, lesson) => {
     const key = lesson.topic.id
     if (!acc[key]) acc[key] = []
@@ -52,91 +71,347 @@ export default async function LessonsPage() {
     return acc
   }, {})
 
+  const totalTopics = Object.keys(grouped).length
+
   return (
-    <div className="max-w-7xl mx-auto space-y-8 pb-20">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Quản lý Bài học</h1>
-          <p className="text-slate-500 text-sm mt-1">
-            {lessons.length} bài học trong {Object.keys(grouped).length} chủ đề
-          </p>
-        </div>
-        <Link href="/teacher/lessons/create"
-          className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl shadow-md shadow-blue-500/20 hover:bg-blue-700 transition-colors shrink-0">
-          <Plus size={18} /> Soạn bài học mới
-        </Link>
-      </div>
+    <>
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        :root{
+          --paper:#FBF6EC; --paper-line:#E7DEC9; --ink:#1D2B4F; --ink-soft:#6B7A94;
+          --red:#C1432E; --gold:#E3A73B; --green:#4C7A6B; --card:#FFFDF7;
+        }
+        
+        .studio-lessons {
+          background:var(--paper);
+          background-image:linear-gradient(var(--paper-line) 1px, transparent 1px);
+          background-size:100% 34px;
+          font-family:'Inter',sans-serif;
+          color:var(--ink);
+          padding:0 0 80px;
+          min-height: 100vh;
+        }
+        .studio-lessons * { box-sizing:border-box; }
+        
+        .studio-lessons .page {
+          max-width:1200px;
+          margin:0 auto;
+          padding:40px 32px 0 96px;
+          position:relative;
+        }
+        .studio-lessons .margin-rule {
+          position:absolute; left:56px; top:0; bottom:0; width:2px; background:var(--red); opacity:.55;
+        }
+        .studio-lessons .margin-rule::before {
+          content:''; position:absolute; left:-5px; top:0; width:12px; height:12px; border-radius:50%; background:var(--red);
+        }
+        .studio-lessons .eyebrow {
+          font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--red); font-weight:700; display:flex; align-items:center; gap:10px; margin-bottom:10px;
+        }
+        .studio-lessons .eyebrow::after {
+          content:''; flex:1; height:1px; background:repeating-linear-gradient(90deg,var(--ink-soft) 0 6px, transparent 6px 12px); opacity:.5;
+        }
+        .studio-lessons .page-head { padding-bottom:32px; margin-bottom:32px; border-bottom:2px dashed #D8CDAE; }
+        .studio-lessons .page-head h1 { font-family:'Fraunces',serif; font-weight:600; font-size:38px; margin:0 0 12px; }
+        .studio-lessons .page-head h1 em { font-style:italic; color:var(--red); }
+        .studio-lessons .page-head p { font-size:15px; color:var(--ink-soft); max-width:680px; line-height:1.6; margin:0; }
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
-        {[
-          { label: 'Đã xuất bản', value: lessons.filter(l => l.status === 'PUBLISHED').length, color: 'text-emerald-600', bg: 'bg-emerald-50 border-emerald-100' },
-          { label: 'Đang soạn',   value: lessons.filter(l => l.status === 'DRAFT').length,     color: 'text-amber-600',   bg: 'bg-amber-50 border-amber-100' },
-          { label: 'Tổng câu hỏi',value: lessons.reduce((s, l) => s + l._count.examQuestions, 0), color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100' },
-        ].map(s => (
-          <div key={s.label} className={cn('rounded-2xl border p-5 shadow-sm', s.bg)}>
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">{s.label}</p>
-            <p className={cn('text-3xl font-extrabold tracking-tight mt-1', s.color)}>{s.value}</p>
-          </div>
-        ))}
-      </div>
+        @media (max-width:860px){
+          .studio-lessons .page {padding-left:56px;} .studio-lessons .margin-rule {left:24px;}
+        }
+        `
+        }}
+      />
 
-      {/* Lesson list */}
-      {lessons.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-dashed border-slate-200 py-24 text-center flex flex-col items-center gap-4">
-          <BookOpen className="text-slate-300" size={48} />
-          <div>
-            <p className="text-slate-600 font-bold text-lg">Chưa có bài học nào</p>
-            <p className="text-slate-400 text-sm mt-1">Nhấn "Soạn bài học mới" để bắt đầu.</p>
+      <div className="studio-lessons">
+        <div className="page">
+          <div className="margin-rule" />
+
+          {/* Header */}
+          <div className="page-head flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+              <div className="eyebrow">Giáo trình & Soạn giảng</div>
+              <h1>
+                Quản lý <em>Bài giảng</em>
+              </h1>
+              <p>
+                Xây dựng giáo trình tương tác đa phương tiện, tích hợp file âm thanh, từ vựng theo chủ đề và câu hỏi ôn luyện theo từng đơn vị bài học.
+              </p>
+            </div>
+
+            <div className="shrink-0">
+              <Link
+                href="/teacher/lessons/create"
+                className="inline-flex items-center gap-2.5 px-6 py-3.5 bg-[#C1432E] text-white font-bold text-sm border-2 border-[#1D2B4F] shadow-[4px_4px_0_#1D2B4F] hover:bg-[#A83724] hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                <Plus size={18} />
+                SOẠN BÀI HỌC MỚI
+              </Link>
+            </div>
           </div>
-          <Link href="/teacher/lessons/create"
-            className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl text-sm hover:bg-blue-700 transition-colors mt-2 flex items-center gap-2">
-            <Plus size={16} /> Soạn ngay
-          </Link>
+
+          {/* 4 Stat Overview Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+            <div className="p-5 bg-[#FFFDF7] border-2 border-[#1D2B4F] shadow-[4px_4px_0_#1D2B4F]">
+              <div className="flex items-center justify-between text-[#6B7A94] mb-2 font-mono text-xs uppercase tracking-wider">
+                <span>Tổng bài học</span>
+                <BookOpen size={16} className="text-[#1D2B4F]" />
+              </div>
+              <div className="text-3xl font-serif font-black text-[#1D2B4F]" style={{ fontFamily: "'Fraunces', serif" }}>
+                {totalLessons}
+              </div>
+              <div className="text-[11px] font-mono text-[#6B7A94] mt-1">{totalTopics} Chủ đề / Units</div>
+            </div>
+
+            <div className="p-5 bg-[#FFFDF7] border-2 border-[#1D2B4F] shadow-[4px_4px_0_#1D2B4F]">
+              <div className="flex items-center justify-between text-[#6B7A94] mb-2 font-mono text-xs uppercase tracking-wider">
+                <span>Đã xuất bản</span>
+                <CheckCircle2 size={16} className="text-[#4C7A6B]" />
+              </div>
+              <div className="text-3xl font-serif font-black text-[#4C7A6B]" style={{ fontFamily: "'Fraunces', serif" }}>
+                {publishedCount}
+              </div>
+              <div className="text-[11px] font-mono text-[#6B7A94] mt-1">Học sinh đang học</div>
+            </div>
+
+            <div className="p-5 bg-[#FFFDF7] border-2 border-[#1D2B4F] shadow-[4px_4px_0_#1D2B4F]">
+              <div className="flex items-center justify-between text-[#6B7A94] mb-2 font-mono text-xs uppercase tracking-wider">
+                <span>Đang soạn</span>
+                <Clock size={16} className="text-[#D97706]" />
+              </div>
+              <div className="text-3xl font-serif font-black text-[#D97706]" style={{ fontFamily: "'Fraunces', serif" }}>
+                {draftCount}
+              </div>
+              <div className="text-[11px] font-mono text-[#6B7A94] mt-1">Bản nháp lưu tạm</div>
+            </div>
+
+            <div className="p-5 bg-[#FFFDF7] border-2 border-[#1D2B4F] shadow-[4px_4px_0_#1D2B4F]">
+              <div className="flex items-center justify-between text-[#6B7A94] mb-2 font-mono text-xs uppercase tracking-wider">
+                <span>Câu hỏi đính kèm</span>
+                <Layers size={16} className="text-[#C1432E]" />
+              </div>
+              <div className="text-3xl font-serif font-black text-[#C1432E]" style={{ fontFamily: "'Fraunces', serif" }}>
+                {totalQuestions}
+              </div>
+              <div className="text-[11px] font-mono text-[#6B7A94] mt-1">Gắn trong bài học</div>
+            </div>
+          </div>
+
+          {/* Filter Bar */}
+          <div className="bg-[#FFFDF7] border-2 border-[#1D2B4F] p-4 shadow-[4px_4px_0_#1D2B4F] mb-8 space-y-4">
+            {/* Grade Filter */}
+            <div className="flex flex-wrap items-center gap-2 font-mono text-xs font-bold" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+              <span className="text-[#6B7A94] uppercase tracking-wider mr-2 text-[11px]">Khối lớp:</span>
+              {[
+                { label: 'Tất cả', val: 'ALL' },
+                { label: 'Khối 10', val: '10' },
+                { label: 'Khối 11', val: '11' },
+                { label: 'Khối 12', val: '12' },
+              ].map((tab) => {
+                const active = selectedGrade === tab.val
+                return (
+                  <Link
+                    key={tab.val}
+                    href={`/teacher/lessons?grade=${tab.val}${selectedSkill !== 'ALL' ? `&skill=${selectedSkill}` : ''}`}
+                    className={`px-3.5 py-1.5 border-2 transition-all ${
+                      active
+                        ? 'bg-[#1D2B4F] text-white border-[#1D2B4F] shadow-[2px_2px_0_#C1432E]'
+                        : 'bg-[#FFFDF7] text-[#1D2B4F] border-[#E7DEC9] hover:border-[#1D2B4F]'
+                    }`}
+                  >
+                    {tab.label}
+                  </Link>
+                )
+              })}
+            </div>
+
+            {/* Skill Filter */}
+            <div className="flex flex-wrap items-center gap-2 font-mono text-xs font-bold pt-3 border-t border-[#E7DEC9]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+              <span className="text-[#6B7A94] uppercase tracking-wider mr-2 text-[11px]">Kỹ năng:</span>
+              {[
+                { label: 'Tất cả', val: 'ALL' },
+                { label: 'Reading', val: 'READING' },
+                { label: 'Listening', val: 'LISTENING' },
+                { label: 'Grammar', val: 'GRAMMAR' },
+                { label: 'Vocabulary', val: 'VOCABULARY' },
+                { label: 'Speaking', val: 'SPEAKING' },
+                { label: 'Writing', val: 'WRITING' },
+              ].map((tab) => {
+                const active = selectedSkill === tab.val
+                return (
+                  <Link
+                    key={tab.val}
+                    href={`/teacher/lessons?skill=${tab.val}${selectedGrade !== 'ALL' ? `&grade=${selectedGrade}` : ''}`}
+                    className={`px-2.5 py-1 border text-[11px] transition-all ${
+                      active
+                        ? 'bg-[#C1432E] text-white border-[#1D2B4F]'
+                        : 'bg-[#FBF6EC] text-[#6B7A94] border-[#E7DEC9] hover:border-[#1D2B4F] hover:text-[#1D2B4F]'
+                    }`}
+                  >
+                    {tab.label}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Lessons List Grouped by Topic */}
+          {totalLessons === 0 ? (
+            <div className="p-16 text-center bg-[#FFFDF7] border-2 border-dashed border-[#1D2B4F] shadow-[6px_6px_0_#E7DEC9]">
+              <BookOpen size={48} className="mx-auto mb-3 opacity-40 text-[#1D2B4F]" />
+              <h3 className="text-xl font-bold font-serif text-[#1D2B4F] mb-1" style={{ fontFamily: "'Fraunces', serif" }}>
+                Chưa có bài học nào trong danh mục này
+              </h3>
+              <p className="text-xs text-[#6B7A94] mb-6">
+                Nhấn vào nút "Soạn bài học mới" để tạo bài giảng đầu tiên cho học sinh.
+              </p>
+              <Link
+                href="/teacher/lessons/create"
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#C1432E] text-white font-mono font-bold text-xs border-2 border-[#1D2B4F]"
+              >
+                <Plus size={16} /> Soạn bài học ngay
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {Object.entries(grouped).map(([topicId, topicLessons]) => {
+                const topic = topicLessons[0].topic
+
+                return (
+                  <div key={topicId} className="space-y-3">
+                    {/* Topic Header Bar */}
+                    <div className="flex items-center justify-between pb-2 border-b-2 border-dashed border-[#D8CDAE]">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="px-2.5 py-0.5 text-xs font-mono font-bold bg-[#1D2B4F] text-white"
+                          style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                        >
+                          LỚP {topic.grade}
+                        </span>
+                        <h2
+                          className="text-xl font-bold text-[#1D2B4F]"
+                          style={{ fontFamily: "'Fraunces', serif" }}
+                        >
+                          {topic.title}
+                        </h2>
+                      </div>
+                      <span className="text-xs font-mono font-bold text-[#6B7A94]">
+                        {topicLessons.length} bài học
+                      </span>
+                    </div>
+
+                    {/* Lessons Cards Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {topicLessons.map((lesson) => {
+                        const skillMeta = SKILL_META[lesson.skill] || {
+                          label: lesson.skill,
+                          icon: <BookOpen size={13} />,
+                          color: '#1D2B4F',
+                          bg: '#FBF6EC',
+                        }
+                        const statusMeta = STATUS_META[lesson.status] || {
+                          label: lesson.status,
+                          color: '#6B7A94',
+                          bg: '#FBF6EC',
+                        }
+
+                        return (
+                          <div
+                            key={lesson.id}
+                            className="p-5 bg-[#FFFDF7] border-2 border-[#1D2B4F] shadow-[4px_4px_0_#1D2B4F] flex flex-col justify-between hover:translate-x-0.5 hover:translate-y-0.5 transition-all"
+                          >
+                            <div className="space-y-3">
+                              {/* Top Meta Badges */}
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className="w-6 h-6 flex items-center justify-center font-mono font-bold text-xs bg-[#FBF6EC] border border-[#1D2B4F] text-[#1D2B4F]"
+                                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                                  >
+                                    #{lesson.order}
+                                  </span>
+                                  <span
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-mono font-bold border"
+                                    style={{
+                                      color: skillMeta.color,
+                                      backgroundColor: skillMeta.bg,
+                                      borderColor: skillMeta.color,
+                                      fontFamily: "'JetBrains Mono', monospace",
+                                    }}
+                                  >
+                                    {skillMeta.icon}
+                                    {skillMeta.label}
+                                  </span>
+                                </div>
+
+                                <span
+                                  className="px-2 py-0.5 text-[10px] font-mono font-bold border"
+                                  style={{
+                                    color: statusMeta.color,
+                                    backgroundColor: statusMeta.bg,
+                                    borderColor: statusMeta.color,
+                                    fontFamily: "'JetBrains Mono', monospace",
+                                  }}
+                                >
+                                  {statusMeta.label}
+                                </span>
+                              </div>
+
+                              {/* Lesson Title */}
+                              <h3
+                                className="text-base font-bold text-[#1D2B4F] leading-snug"
+                                style={{ fontFamily: "'Fraunces', serif" }}
+                              >
+                                {lesson.title}
+                              </h3>
+
+                              {/* Mini Specs */}
+                              <div
+                                className="flex items-center gap-4 text-xs font-mono text-[#6B7A94] pt-1"
+                                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                              >
+                                <span>{lesson._count.contents} khối nội dung</span>
+                                <span>•</span>
+                                <span>{lesson._count.vocabularies} từ vựng</span>
+                                <span>•</span>
+                                <span>{lesson._count.examQuestions} câu hỏi</span>
+                              </div>
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div className="flex items-center justify-between gap-2 pt-4 mt-4 border-t border-[#E7DEC9]">
+                              <Link
+                                href={`/lessons/${lesson.id}`}
+                                target="_blank"
+                                className="flex items-center gap-1.5 text-xs font-mono font-bold text-[#4C7A6B] hover:underline"
+                                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                              >
+                                <ExternalLink size={13} />
+                                Xem góc nhìn học sinh
+                              </Link>
+
+                              <Link
+                                href={`/teacher/lessons/${lesson.id}`}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-[#1D2B4F] text-white text-xs font-mono font-bold border border-[#1D2B4F] shadow-[2px_2px_0_#C1432E] hover:bg-[#2A3C6B]"
+                                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                              >
+                                <span>SOẠN THẢO</span>
+                                <ArrowRight size={12} />
+                              </Link>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="space-y-8">
-          {Object.entries(grouped).map(([topicId, topicLessons]) => {
-            const topic = topicLessons[0].topic
-            return (
-              <section key={topicId}>
-                <div className="flex items-center gap-3 mb-4">
-                  <h2 className="font-bold text-slate-700 text-lg">{topic.title}</h2>
-                  <span className="px-2 py-0.5 bg-slate-100 text-slate-500 rounded text-xs font-bold">Lớp {topic.grade}</span>
-                  <span className="text-xs text-slate-400 font-medium">{topicLessons.length} bài</span>
-                </div>
-                <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden divide-y divide-slate-100">
-                  {topicLessons.map((lesson) => {
-                    const skillM = SKILL_META[lesson.skill]
-                    const statusM = STATUS_META[lesson.status]
-                    return (
-                      <Link key={lesson.id} href={`/lessons/${lesson.id}`}
-                        className="flex items-center gap-4 p-5 hover:bg-slate-50 transition-colors group">
-                        <div className="w-8 h-8 flex items-center justify-center text-slate-400 font-black text-sm shrink-0">
-                          {lesson.order}
-                        </div>
-                        <div className={cn('flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-bold shrink-0', skillM.color)}>
-                          {skillM.icon} {skillM.label}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-slate-800 group-hover:text-blue-600 transition-colors truncate">{lesson.title}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">
-                            {lesson._count.contents} block nội dung · {lesson._count.examQuestions} câu hỏi
-                          </p>
-                        </div>
-                        <div className={cn('flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold shrink-0', statusM.color)}>
-                          {statusM.icon} {statusM.label}
-                        </div>
-                        <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-500 transition-colors shrink-0" />
-                      </Link>
-                    )
-                  })}
-                </div>
-              </section>
-            )
-          })}
-        </div>
-      )}
-    </div>
+      </div>
+    </>
   )
 }
