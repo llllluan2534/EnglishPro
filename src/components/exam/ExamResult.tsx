@@ -7,7 +7,7 @@ import confetti from 'canvas-confetti'
 
 export interface ExamResultData {
   id: string
-  examId: string
+  examId: string | number
   examTitle: string
   examDescription?: string
   duration: number
@@ -16,23 +16,23 @@ export interface ExamResultData {
   percentage: number
   isPassed: boolean
   timeSpent: number
-  submittedAt: string
+  submittedAt: string | Date
   totalQuestions: number
   correctCount: number
   wrongCount: number
   answers: {
-    id: string
+    id: string | number
     index: number
-    questionId: string
+    questionId: string | number
     skill: string
     type: string
     difficulty: string
     content: any
     explanation?: string
-    options: { id: string; text: string; order: number; isCorrect?: boolean }[]
-    selectedOptionId?: string | null
+    options: { id: string | number; text: string; order: number; isCorrect?: boolean }[]
+    selectedOptionId?: string | number | null
     selectedOptionText?: string | null
-    correctOptionId?: string | null
+    correctOptionId?: string | number | null
     correctOptionText?: string | null
     isCorrect?: boolean | null
     score: number
