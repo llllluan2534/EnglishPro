@@ -123,7 +123,13 @@ export default async function TeacherQuestionsPage({
         .studio-questions .page-head p { font-size:15px; color:var(--ink-soft); max-width:680px; line-height:1.6; margin:0; }
 
         @media (max-width:860px){
-          .studio-questions .page {padding-left:56px;} .studio-questions .margin-rule {left:24px;}
+          .studio-questions .page {padding-left:48px; padding-right:20px;} .studio-questions .margin-rule {left:20px;}
+        }
+        @media (max-width:640px){
+          .studio-questions .page {padding:20px 14px 60px 26px !important;}
+          .studio-questions .margin-rule {left:10px !important; opacity:.35 !important;}
+          .studio-questions .page-head h1 {font-size:26px !important; line-height:1.25 !important;}
+          .studio-questions .page-head p {font-size:13px !important;}
         }
         `
         }}

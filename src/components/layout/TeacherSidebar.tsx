@@ -1,12 +1,13 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, BookOpen, PenTool,
-  Award, LogOut, Users, ExternalLink
+  Award, LogOut, Users, ExternalLink, Menu, X
 } from 'lucide-react'
 
 const navItems = [
@@ -19,14 +20,17 @@ const navItems = [
 
 export default function TeacherSidebar() {
   const pathname = usePathname()
+  const [isOpenMobile, setIsOpenMobile] = useState(false)
 
-  return (
-    <aside
-      className="w-72 shrink-0 h-screen sticky top-0 bg-[#FFFDF7] border-r-2 border-[#1D2B4F] flex flex-col z-20"
-      style={{ fontFamily: "'Inter', sans-serif" }}
-    >
+  // Auto close mobile drawer on route change
+  useEffect(() => {
+    setIsOpenMobile(false)
+  }, [pathname])
+
+  const sidebarContent = (
+    <div className="flex flex-col h-full bg-[#FFFDF7]" style={{ fontFamily: "'Inter', sans-serif" }}>
       {/* Brand Header */}
-      <div className="h-24 flex items-center px-8 border-b-2 border-dashed border-[#E7DEC9]">
+      <div className="h-20 md:h-24 flex items-center justify-between px-6 md:px-8 border-b-2 border-dashed border-[#E7DEC9]">
         <Link href="/teacher/dashboard" className="flex items-center gap-3 group">
           <div className="w-10 h-10 bg-[#1D2B4F] border-2 border-[#1D2B4F] flex items-center justify-center shadow-[2px_2px_0_#C1432E] group-hover:translate-x-0.5 group-hover:translate-y-0.5 transition-all">
             <span
@@ -51,6 +55,15 @@ export default function TeacherSidebar() {
             </span>
           </div>
         </Link>
+
+        {/* Close Button on Mobile Drawer */}
+        <button
+          onClick={() => setIsOpenMobile(false)}
+          className="lg:hidden p-2 text-[#1D2B4F] hover:bg-[#E7DEC9] border border-[#1D2B4F] shadow-[1px_1px_0_#1D2B4F]"
+          aria-label="Đóng menu"
+        >
+          <X size={18} />
+        </button>
       </div>
 
       {/* Navigation Links */}
@@ -116,6 +129,66 @@ export default function TeacherSidebar() {
           ĐĂNG XUẤT
         </button>
       </div>
-    </aside>
+    </div>
+  )
+
+  return (
+    <>
+      {/* 1. Mobile Top Header Bar (Only visible on screens < 1024px) */}
+      <header className="lg:hidden sticky top-0 z-30 bg-[#FFFDF7] border-b-2 border-[#1D2B4F] px-4 py-3 flex items-center justify-between shadow-[0_2px_0_#1D2B4F]">
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setIsOpenMobile(true)}
+            className="p-2 bg-[#FBF6EC] border-2 border-[#1D2B4F] text-[#1D2B4F] shadow-[2px_2px_0_#1D2B4F] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+            aria-label="Mở menu quản trị"
+          >
+            <Menu size={18} />
+          </button>
+
+          <Link href="/teacher/dashboard" className="flex items-center gap-2">
+            <div className="w-8 h-8 bg-[#1D2B4F] text-white flex items-center justify-center font-mono font-bold text-xs border border-[#1D2B4F] shadow-[1px_1px_0_#C1432E]">
+              EP
+            </div>
+            <div>
+              <span className="font-bold text-[#1D2B4F] text-sm leading-tight block" style={{ fontFamily: "'Fraunces', serif" }}>
+                Teacher Hub
+              </span>
+              <span className="text-[9px] font-mono text-[#C1432E] uppercase tracking-wider block">
+                Phân hệ Giáo viên
+              </span>
+            </div>
+          </Link>
+        </div>
+
+        <Link
+          href="/exam"
+          target="_blank"
+          className="px-2.5 py-1 text-[11px] font-mono font-bold text-[#4C7A6B] bg-[#DCE9E3] border border-[#4C7A6B]"
+        >
+          Góc học sinh
+        </Link>
+      </header>
+
+      {/* 2. Mobile Drawer Backdrop & Menu (< 1024px) */}
+      {isOpenMobile && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setIsOpenMobile(false)}
+          />
+
+          {/* Sliding Drawer */}
+          <div className="relative w-72 max-w-[85vw] h-full z-10 shadow-2xl border-r-2 border-[#1D2B4F]">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+
+      {/* 3. Desktop Permanent Sidebar (>= 1024px) */}
+      <aside className="hidden lg:flex w-72 shrink-0 h-screen sticky top-0 border-r-2 border-[#1D2B4F] flex-col z-20">
+        {sidebarContent}
+      </aside>
+    </>
   )
 }

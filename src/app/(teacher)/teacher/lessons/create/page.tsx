@@ -66,7 +66,13 @@ export default async function CreateLessonPage({ searchParams }: Props) {
         .studio-create-lesson .page-head p { font-size:14px; color:var(--ink-soft); line-height:1.6; margin:0; }
 
         @media (max-width:860px){
-          .studio-create-lesson .page {padding-left:56px;} .studio-create-lesson .margin-rule {left:24px;}
+          .studio-create-lesson .page {padding-left:48px; padding-right:20px;} .studio-create-lesson .margin-rule {left:20px;}
+        }
+        @media (max-width:640px){
+          .studio-create-lesson .page {padding:20px 14px 60px 26px !important;}
+          .studio-create-lesson .margin-rule {left:10px !important; opacity:.35 !important;}
+          .studio-create-lesson .page-head h1 {font-size:24px !important; line-height:1.25 !important;}
+          .studio-create-lesson .page-head p {font-size:13px !important;}
         }
         `
         }}

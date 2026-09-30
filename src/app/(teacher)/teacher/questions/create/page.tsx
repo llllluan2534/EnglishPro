@@ -55,7 +55,13 @@ export default async function TeacherCreateQuestionPage() {
         .studio-create-question .page-head p { font-size:14px; color:var(--ink-soft); line-height:1.6; margin:0; }
 
         @media (max-width:860px){
-          .studio-create-question .page {padding-left:56px;} .studio-create-question .margin-rule {left:24px;}
+          .studio-create-question .page {padding-left:48px; padding-right:20px;} .studio-create-question .margin-rule {left:20px;}
+        }
+        @media (max-width:640px){
+          .studio-create-question .page {padding:20px 14px 60px 26px !important;}
+          .studio-create-question .margin-rule {left:10px !important; opacity:.35 !important;}
+          .studio-create-question .page-head h1 {font-size:24px !important; line-height:1.25 !important;}
+          .studio-create-question .page-head p {font-size:13px !important;}
         }
         `
         }}

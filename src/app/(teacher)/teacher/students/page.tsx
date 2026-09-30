@@ -132,7 +132,13 @@ export default async function TeacherStudentsPage({
         .studio-students .page-head p { font-size:15px; color:var(--ink-soft); max-width:680px; line-height:1.6; margin:0; }
 
         @media (max-width:860px){
-          .studio-students .page {padding-left:56px;} .studio-students .margin-rule {left:24px;}
+          .studio-students .page {padding-left:48px; padding-right:20px;} .studio-students .margin-rule {left:20px;}
+        }
+        @media (max-width:640px){
+          .studio-students .page {padding:20px 14px 60px 26px !important;}
+          .studio-students .margin-rule {left:10px !important; opacity:.35 !important;}
+          .studio-students .page-head h1 {font-size:26px !important; line-height:1.25 !important;}
+          .studio-students .page-head p {font-size:13px !important;}
         }
         `
         }}
