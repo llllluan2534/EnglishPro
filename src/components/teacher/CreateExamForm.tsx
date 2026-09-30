@@ -100,14 +100,98 @@ export default function CreateExamForm({ availableQuestions }: CreateExamFormPro
     setError(null)
     setScanResultNotice(null)
 
-    try {
-      const formData = new FormData()
-      formData.append('file', selectedFile)
+    const ext = selectedFile.name.split('.').pop()?.toLowerCase()
 
-      const res = await fetch('/api/teacher/exams/scan', {
-        method: 'POST',
-        body: formData,
-      })
+    try {
+      let extractedText = ''
+
+      // 1. Nếu là file PDF: Dùng Mozilla PDF.js trích xuất trực tiếp
+      if (ext === 'pdf') {
+        const getPdfJs = async () => {
+          if ((window as any).pdfjsLib) return (window as any).pdfjsLib
+          await new Promise<void>((resolve, reject) => {
+            const script = document.createElement('script')
+            script.src = '/vendor/pdfjs/pdf.min.js'
+            script.onload = () => resolve()
+            script.onerror = () => reject(new Error('Không thể tải bộ đọc PDF. Vui lòng thử lại.'))
+            document.head.appendChild(script)
+          })
+          return (window as any).pdfjsLib
+        }
+
+        const pdfjsLib = await getPdfJs()
+        pdfjsLib.GlobalWorkerOptions.workerSrc = '/vendor/pdfjs/pdf.worker.min.js'
+
+        const arrayBuffer = await selectedFile.arrayBuffer()
+        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
+        const pdf = await loadingTask.promise
+
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          const page = await pdf.getPage(pageNum)
+          const textContent = await page.getTextContent()
+
+          let lastY: number | null = null
+          let pageText = ''
+          for (const item of textContent.items as any[]) {
+            if (!item.str) continue
+            // Nếu tọa độ Y thay đổi > 6px -> ngắt dòng mới
+            if (lastY !== null && Math.abs(item.transform[5] - lastY) > 6) {
+              pageText += '\n'
+            } else if (pageText.length > 0 && !pageText.endsWith(' ') && !pageText.endsWith('\n')) {
+              pageText += ' '
+            }
+            pageText += item.str
+            lastY = item.transform[5]
+          }
+          extractedText += pageText + '\n\n'
+        }
+
+        if (!extractedText.trim() || extractedText.trim().length < 30) {
+          throw new Error('Tệp PDF này là bản scan hình ảnh (không chứa văn bản có thể trích xuất). Bạn vui lòng dùng file Word (.docx) hoặc sao chép và dán trực tiếp nội dung vào tab "Dán nhanh văn bản".')
+        }
+      } else if (ext === 'docx') {
+        // 2. Nếu là file Word: Dùng Mammoth browser nếu có sẵn
+        const getMammoth = async () => {
+          if ((window as any).mammoth) return (window as any).mammoth
+          try {
+            await new Promise<void>((resolve, reject) => {
+              const script = document.createElement('script')
+              script.src = '/vendor/mammoth/mammoth.browser.min.js'
+              script.onload = () => resolve()
+              script.onerror = () => reject()
+              document.head.appendChild(script)
+            })
+            return (window as any).mammoth
+          } catch {
+            return null
+          }
+        }
+
+        const mammoth = await getMammoth()
+        if (mammoth) {
+          const arrayBuffer = await selectedFile.arrayBuffer()
+          const result = await mammoth.extractRawText({ arrayBuffer })
+          extractedText = result.value || ''
+        }
+      }
+
+      let res: Response
+      if (extractedText.trim()) {
+        // Gửi text đã giải nén Unicode sạch sẽ
+        res = await fetch('/api/teacher/exams/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: extractedText, fileName: selectedFile.name }),
+        })
+      } else {
+        // Fallback gửi file nguyên bản
+        const formData = new FormData()
+        formData.append('file', selectedFile)
+        res = await fetch('/api/teacher/exams/scan', {
+          method: 'POST',
+          body: formData,
+        })
+      }
 
       const data = await res.json()
       if (!res.ok) {
@@ -115,7 +199,11 @@ export default function CreateExamForm({ availableQuestions }: CreateExamFormPro
       }
 
       if (!data.questions || data.questions.length === 0) {
-        setError(data.warning || 'Không tìm thấy câu hỏi nào hợp lệ trong tệp')
+        // Nếu có text nhưng chưa nhận diện được câu hỏi: Đưa text vào tab dán nhanh để giáo viên xem
+        if (extractedText.trim()) {
+          setPasteText(extractedText)
+        }
+        setError(data.warning || 'Không tìm thấy câu hỏi nào hợp lệ trong tệp. Nội dung đã được chuyển sang tab "Dán nhanh văn bản" để bạn xem và chỉnh sửa.')
         setIsScanning(false)
         return
       }

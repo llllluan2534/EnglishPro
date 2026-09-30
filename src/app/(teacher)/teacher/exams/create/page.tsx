@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import Script from 'next/script'
 import { ArrowLeft } from 'lucide-react'
 import CreateExamForm from '@/components/teacher/CreateExamForm'
 
@@ -132,6 +133,9 @@ export default async function TeacherCreateExamPage() {
           <CreateExamForm availableQuestions={availableQuestions} />
         </div>
       </div>
+
+      <Script src="/vendor/pdfjs/pdf.min.js" strategy="afterInteractive" />
+      <Script src="/vendor/mammoth/mammoth.browser.min.js" strategy="afterInteractive" />
     </>
   )
 }

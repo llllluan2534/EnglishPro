@@ -213,29 +213,41 @@ export function parseExamText(rawText: string): ParsedQuestion[] {
 
   // 3. Gom cụm các dòng theo từng câu hỏi
   // Nhận diện dòng bắt đầu câu hỏi:
-  // "Câu 1:", "Câu 1.", "Question 1:", "1.", "1/", "Bài 1:"
-  const questionStartRegex = /^(?:Câu|Question|Bài|Item)?\s*(\d+)[\.\:\/\s\-]+(.+)/i
+  // "Câu 1:", "Câu 1. ...", "Question 1: ...", "1. ...", "1) ...", "1/ ..."
+  const questionStartRegex = /^(?:(?:Câu|Question|Bài|Item)\s*)?(\d+)[\.\:\)\/\-\s]\s*(.*)/i
 
   const rawQuestions: { num: number; header: string; contentLines: string[] }[] = []
   let currentQ: { num: number; header: string; contentLines: string[] } | null = null
 
   for (const line of lines) {
     const qMatch = line.match(questionStartRegex)
-    if (qMatch && parseInt(qMatch[1], 10) > 0 && parseInt(qMatch[1], 10) <= 200) {
-      if (currentQ) {
-        rawQuestions.push(currentQ)
+    if (qMatch) {
+      const qNum = parseInt(qMatch[1], 10)
+      const afterText = qMatch[2] ? qMatch[2].trim() : ''
+      const hasPrefix = /^(?:Câu|Question|Bài|Item)/i.test(line)
+
+      if (qNum > 0 && qNum <= 250 && (hasPrefix || afterText.length > 2)) {
+        if (currentQ) {
+          rawQuestions.push(currentQ)
+        }
+        currentQ = {
+          num: qNum,
+          header: afterText,
+          contentLines: afterText ? [afterText] : []
+        }
+        continue
       }
-      currentQ = {
-        num: parseInt(qMatch[1], 10),
-        header: qMatch[2].trim(),
-        contentLines: [qMatch[2].trim()]
-      }
-    } else if (currentQ) {
+    }
+
+    if (currentQ) {
       // Kiểm tra xem đã đến phần BẢNG ĐÁP ÁN ở cuối chưa
       if (/^(?:BẢNG\s+ĐÁP\s+ÁN|ANSWER\s+KEY|HƯỚNG\s+DẪN\s+CHẤM|ĐÁP\s+ÁN\s+ĐỀ)/i.test(line)) {
         rawQuestions.push(currentQ)
         currentQ = null
       } else {
+        if (!currentQ.header && line) {
+          currentQ.header = line
+        }
         currentQ.contentLines.push(line)
       }
     }
@@ -270,8 +282,8 @@ export function parseExamText(rawText: string): ParsedQuestion[] {
     const stopIndexMatch = fullBlock.search(/(?:^|[\s\t\n])(?:Đáp\s*án|Key|Ans|Correct|Lời\s*giải|Giải\s*thích|Explanation)\s*[\:\-\=\.]/i)
     const optionsSearchBlock = stopIndexMatch !== -1 ? fullBlock.substring(0, stopIndexMatch) : fullBlock
 
-    // Tìm các vị trí xuất hiện của marker phương án: A., B., C., D. (hoặc A), B)...)
-    const markerRegex = /(?:^|[\s\t\r\n])(?:\*?)([A-D])[\.\)\:\-]\s+/g
+    // Tìm các vị trí xuất hiện của marker phương án: A., B., C., D. (hoặc A), (A), [A], A/...)
+    const markerRegex = /(?:^|[\s\t\r\n])(?:\*|\()?([A-D])[\.\)\:\/\-\]]\s+/gi
     const markers: { letter: string; isStarred: boolean; matchIndex: number; textStart: number }[] = []
 
     let m: RegExpExecArray | null
