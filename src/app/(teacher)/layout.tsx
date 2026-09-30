@@ -6,9 +6,9 @@ export default function TeacherLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-[#FBF6EC]">
       <TeacherSidebar />
-      <main className="flex-1 overflow-y-auto bg-slate-50/50 px-12 py-10">
+      <main className="flex-1 overflow-y-auto min-h-screen">
         {children}
       </main>
     </div>
