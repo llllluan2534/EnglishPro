@@ -360,8 +360,8 @@ export default async function TeacherStudentsPage({
                             </div>
                             <div className="text-[11px] text-[#6B7A94] font-mono flex items-center gap-1">
                               <Calendar size={11} />
-                              {student.dateOfBirth
-                                ? new Date(student.dateOfBirth).toLocaleDateString('vi-VN')
+                              {(student as any).dateOfBirth
+                                ? new Date((student as any).dateOfBirth).toLocaleDateString('vi-VN')
                                 : 'Chưa cập nhật ngày sinh'}
                             </div>
                           </td>

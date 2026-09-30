@@ -184,7 +184,7 @@ export default async function StudentDetailPage({
                     </span>
                     <span className="flex items-center gap-1.5">
                       <Calendar size={13} />
-                      Ngày sinh: {student.dateOfBirth ? new Date(student.dateOfBirth).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
+                      Ngày sinh: {(student as any).dateOfBirth ? new Date((student as any).dateOfBirth).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
                     </span>
                     <span>
                       Tham gia: {new Date(student.createdAt).toLocaleDateString('vi-VN')}
