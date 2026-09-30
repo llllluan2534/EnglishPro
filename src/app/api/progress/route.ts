@@ -112,3 +112,85 @@ export async function GET() {
     return NextResponse.json({ error: 'Failed to fetch progress' }, { status: 500 })
   }
 }
+
+export async function POST(req: Request) {
+  try {
+    const session = await auth()
+    if (!session || !session.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await req.json()
+    const { lessonId, isCompleted, timeSpent, score } = body
+
+    if (!lessonId) {
+      return NextResponse.json({ error: 'lessonId is required' }, { status: 400 })
+    }
+
+    // Check if lesson exists
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: lessonId }
+    })
+
+    if (!lesson) {
+      return NextResponse.json({ error: 'Lesson not found' }, { status: 404 })
+    }
+
+    // Check if already completed previously to avoid duplicate XP
+    const existing = await prisma.lessonProgress.findUnique({
+      where: {
+        userId_lessonId: {
+          userId: session.user.id,
+          lessonId,
+        }
+      }
+    })
+
+    const wasAlreadyCompleted = existing?.isCompleted === true
+
+    // Upsert LessonProgress
+    const progress = await prisma.lessonProgress.upsert({
+      where: {
+        userId_lessonId: {
+          userId: session.user.id,
+          lessonId,
+        }
+      },
+      update: {
+        isCompleted: isCompleted ?? true,
+        completedAt: isCompleted ? new Date() : existing?.completedAt,
+        timeSpent: timeSpent ? { increment: timeSpent } : undefined,
+        score: score !== undefined ? score : undefined,
+        lastAccessedAt: new Date(),
+      },
+      create: {
+        userId: session.user.id,
+        lessonId,
+        isCompleted: isCompleted ?? true,
+        completedAt: isCompleted ? new Date() : null,
+        timeSpent: timeSpent || 0,
+        score: score ?? null,
+        lastAccessedAt: new Date(),
+      }
+    })
+
+    // Award XP and update streak only if newly completed
+    let xpAwarded = 0
+    if (isCompleted && !wasAlreadyCompleted) {
+      const { addXP, updateStreak } = await import('@/lib/gamification')
+      await addXP(session.user.id, 'LESSON_COMPLETE', lessonId)
+      await updateStreak(session.user.id)
+      xpAwarded = 20
+    }
+
+    return NextResponse.json({
+      success: true,
+      progress,
+      xpAwarded,
+    })
+  } catch (error) {
+    console.error('Save progress error:', error)
+    return NextResponse.json({ error: 'Failed to save progress' }, { status: 500 })
+  }
+}
+

@@ -682,7 +682,7 @@ The second technique is called the "memory palace". Visualize your home and ment
     data: {
       examId: examTHPT.id,
       title: 'Phần 4: Đọc hiểu văn bản chuyên sâu',
-      instruction: 'Read the following passage and mark the letter A, B, C, or D on your answer sheet to indicate the best answer to each of the following questions from 23 to 30.',
+      instruction: 'Read the following passage and mark the letter A, B, C, or D on your answer sheet to indicate the best answer to each of the following questions from 23 to 40.',
       order: 4,
       skill: Skill.READING,
     }
@@ -893,6 +893,261 @@ For some people, especially those under long-term stress, cravings for sweets ma
     }
   })
 
+  // -------------------------------------------------------------------------
+  // Bài đọc 2: Celebrity Carbon Footprints & Private Jets (Q31 - Q40)
+  // -------------------------------------------------------------------------
+  const passageCelebrityEmissions = `In their article “Just Plane Wrong: Celebs with the Worst Private Jet CO2 Emissions,” YARD ranked Taylor Swift as the celebrity with the largest carbon footprint, attributing 138 tons of emissions to her private jet. Jay-Z and Floyd Mayweather followed closely behind. Swift’s recent attendance at Kansas City Chiefs games to support her partner, Travis Kelce, has intensified media scrutiny. Celebrities receiving public criticism for air travel is hardly a new phenomenon. Singling out one individual risks oversimplifying a broader issue that predates any particular headline. [I]
+
+Carbon emissions are, to some extent, unavoidable for high-profile public figures who travel frequently. In “Rich Enough to Offset,” Laura Kiesel explores the ever-increasing carbon emissions of celebrities including Arnold Schwarzenegger and Leonardo DiCaprio, and how they have tried to account for them. One popular approach is carbon offsetting, a practice that allows individuals to compensate for emissions by funding environmental initiatives, including reforestation or renewable energy projects. [II] While such efforts may signal accountability, critics argue that they rarely neutralize emissions in any meaningful sense.
+
+Professor Jon Erickson of the University of Vermont highlights concerns about the unintended consequences of certain offset projects, particularly in developing regions. Some initiatives, such as small-scale solar schemes established to counterbalance luxury emissions, may inadvertently limit resources available for essential services like healthcare and education. Furthermore, these efforts do little to address the root causes of excess carbon emissions. Erickson therefore calls for stronger legislative measures, including mandated caps on emissions that would directly address the source of the problem without displacing its impacts. [III]
+
+Celebrity air travel remains under constant scrutiny, regardless of public sentiment. Although voluntary offset programmes may help restore celebrities’ reputations, they can also legitimise continued overconsumption. In “Don’t Bet on Offsets,” A.C. Thompson and Duane Moles question whether such mechanisms can realistically counteract emissions. Companies such as TerraPass offer affluent consumers the opportunity to calculate and compensate for their carbon footprints, yet these transactions often occur in loosely regulated markets lacking consistent standards. [IV]
+
+While carbon offsetting provides limited mitigation opportunities, meaningful progress depends on systemic reforms that reduce overall emissions and confront the underlying causes of climate impact.`
+
+  const q31 = await prisma.question.create({
+    data: {
+      authorId: teacher.id,
+      skill: Skill.READING,
+      type: QuestionType.MULTIPLE_CHOICE,
+      difficulty: Difficulty.MEDIUM,
+      content: {
+        passageTitle: 'CELEBRITY CARBON FOOTPRINTS & PRIVATE JETS',
+        passage: passageCelebrityEmissions,
+        text: 'Question 31: The author mentions Taylor Swift in paragraph 1 primarily to _______.'
+      },
+      explanation: 'Dẫn chứng cuối đoạn 1: "Singling out one individual risks oversimplifying a broader issue that predates any particular headline." (Việc nhắm vào một cá nhân có nguy cơ đơn giản hóa quá mức một vấn đề rộng lớn hơn). Tác giả nhắc đến Taylor Swift nhằm minh họa cách một trường hợp cá nhân có thể làm lu mờ vấn đề cơ cấu rộng lớn hơn.',
+      status: ContentStatus.PUBLISHED,
+      options: {
+        create: [
+          { text: 'demonstrate that celebrities are unfairly targeted by environmental critics', isCorrect: false, order: 0 },
+          { text: 'argue that public figures are the main contributors to climate change', isCorrect: false, order: 1 },
+          { text: 'illustrate how individual cases can obscure a broader structural issue', isCorrect: true, order: 2 },
+          { text: 'suggest that media attention exaggerates environmental concerns', isCorrect: false, order: 3 },
+        ]
+      }
+    }
+  })
+
+  const q32 = await prisma.question.create({
+    data: {
+      authorId: teacher.id,
+      skill: Skill.READING,
+      type: QuestionType.MULTIPLE_CHOICE,
+      difficulty: Difficulty.EASY,
+      content: {
+        passageTitle: 'CELEBRITY CARBON FOOTPRINTS & PRIVATE JETS',
+        passage: passageCelebrityEmissions,
+        text: 'Question 32: The phrase "such efforts" in paragraph 2 refers to _______.'
+      },
+      explanation: 'Dẫn chứng đoạn 2: "...by funding environmental initiatives, including reforestation or renewable energy projects. While such efforts may signal accountability..." -> "such efforts" (những nỗ lực như vậy) quy chiếu đến "environmental initiatives" (các sáng kiến môi trường) ở câu liền trước.',
+      status: ContentStatus.PUBLISHED,
+      options: {
+        create: [
+          { text: 'high-profile individuals', isCorrect: false, order: 0 },
+          { text: 'environmental initiatives', isCorrect: true, order: 1 },
+          { text: 'carbon emissions', isCorrect: false, order: 2 },
+          { text: 'renewable energy projects', isCorrect: false, order: 3 },
+        ]
+      }
+    }
+  })
+
+  const q33 = await prisma.question.create({
+    data: {
+      authorId: teacher.id,
+      skill: Skill.READING,
+      type: QuestionType.MULTIPLE_CHOICE,
+      difficulty: Difficulty.MEDIUM,
+      content: {
+        passageTitle: 'CELEBRITY CARBON FOOTPRINTS & PRIVATE JETS',
+        passage: passageCelebrityEmissions,
+        text: 'Question 33: According to paragraph 2, how do some celebrities attempt to manage their environmental impact?'
+      },
+      explanation: 'Dẫn chứng đoạn 2: "One popular approach is carbon offsetting, a practice that allows individuals to compensate for emissions by funding environmental initiatives, including reforestation or renewable energy projects." (Tài trợ tài chính cho các dự án môi trường để bù đắp khí thải).',
+      status: ContentStatus.PUBLISHED,
+      options: {
+        create: [
+          { text: 'By investing exclusively in large-scale renewable infrastructure', isCorrect: false, order: 0 },
+          { text: 'By reducing the frequency of their international travel schedules', isCorrect: false, order: 1 },
+          { text: 'By financially supporting environmental projects to offset emissions', isCorrect: true, order: 2 },
+          { text: 'By complying with mandatory government carbon regulations', isCorrect: false, order: 3 },
+        ]
+      }
+    }
+  })
+
+  const q34 = await prisma.question.create({
+    data: {
+      authorId: teacher.id,
+      skill: Skill.READING,
+      type: QuestionType.MULTIPLE_CHOICE,
+      difficulty: Difficulty.MEDIUM,
+      content: {
+        passageTitle: 'CELEBRITY CARBON FOOTPRINTS & PRIVATE JETS',
+        passage: passageCelebrityEmissions,
+        text: 'Question 34: According to paragraph 3, some offset initiatives may be problematic because they _______.'
+      },
+      explanation: 'Dẫn chứng đoạn 3: "Some initiatives, such as small-scale solar schemes established to counterbalance luxury emissions, may inadvertently limit resources available for essential services like healthcare and education" (vô tình hạn chế nguồn lực cho các dịch vụ thiết yếu như y tế và giáo dục tại các cộng đồng thu nhập thấp/vùng đang phát triển).',
+      status: ContentStatus.PUBLISHED,
+      options: {
+        create: [
+          { text: 'eliminate local employment opportunities in developing regions', isCorrect: false, order: 0 },
+          { text: 'unintentionally limit essential services in lower-income communities', isCorrect: true, order: 1 },
+          { text: 'increase the operational costs of small-scale solar installations', isCorrect: false, order: 2 },
+          { text: 'reduce investment in global renewable energy schemes and markets', isCorrect: false, order: 3 },
+        ]
+      }
+    }
+  })
+
+  const q35 = await prisma.question.create({
+    data: {
+      authorId: teacher.id,
+      skill: Skill.READING,
+      type: QuestionType.MULTIPLE_CHOICE,
+      difficulty: Difficulty.HARD,
+      content: {
+        passageTitle: 'CELEBRITY CARBON FOOTPRINTS & PRIVATE JETS',
+        passage: passageCelebrityEmissions,
+        text: `Question 35: Which of the following best paraphrases the underlined sentence in paragraph 3?
+"Furthermore, these efforts do little to address the root causes of excess carbon emissions."`
+      },
+      explanation: '"do little to address" = "make minimal progress in tackling" (đạt rất ít tiến triển trong việc giải quyết); "the root causes of excess carbon emissions" = "the underlying issue of excessive carbon emissions" (vấn đề gốc rễ căn bản của lượng khí thải quá mức).',
+      status: ContentStatus.PUBLISHED,
+      options: {
+        create: [
+          { text: 'These initiatives make minimal progress in tackling the underlying issue of excessive carbon emissions.', isCorrect: true, order: 0 },
+          { text: 'These efforts tend to focus on reducing visible emissions rather than their overall generated volume.', isCorrect: false, order: 1 },
+          { text: 'These programmes shift responsibility for tackling carbon emissions to alternative environmental sectors.', isCorrect: false, order: 2 },
+          { text: 'These initiatives are likely to eliminate the primary factors responsible for high carbon emissions.', isCorrect: false, order: 3 },
+        ]
+      }
+    }
+  })
+
+  const q36 = await prisma.question.create({
+    data: {
+      authorId: teacher.id,
+      skill: Skill.READING,
+      type: QuestionType.MULTIPLE_CHOICE,
+      difficulty: Difficulty.MEDIUM,
+      content: {
+        passageTitle: 'CELEBRITY CARBON FOOTPRINTS & PRIVATE JETS',
+        passage: passageCelebrityEmissions,
+        text: 'Question 36: Which of the following is TRUE according to paragraph 4?'
+      },
+      explanation: 'Dẫn chứng cuối đoạn 4: "...yet these transactions often occur in loosely regulated markets lacking consistent standards." -> "loosely regulated" tương đương với "poorly regulated environments" (môi trường/thị trường quản lý lỏng lẻo).',
+      status: ContentStatus.PUBLISHED,
+      options: {
+        create: [
+          { text: 'TerraPass has eliminated doubts about carbon neutrality claims.', isCorrect: false, order: 0 },
+          { text: 'Offset programmes guarantee measurable reductions in emissions.', isCorrect: false, order: 1 },
+          { text: 'Carbon offset markets operate under strict international regulation.', isCorrect: false, order: 2 },
+          { text: 'Some offset transactions occur in poorly regulated environments.', isCorrect: true, order: 3 },
+        ]
+      }
+    }
+  })
+
+  const q37 = await prisma.question.create({
+    data: {
+      authorId: teacher.id,
+      skill: Skill.READING,
+      type: QuestionType.MULTIPLE_CHOICE,
+      difficulty: Difficulty.MEDIUM,
+      content: {
+        passageTitle: 'CELEBRITY CARBON FOOTPRINTS & PRIVATE JETS',
+        passage: passageCelebrityEmissions,
+        text: 'Question 37: The word "legitimise" in paragraph 4 is closest in meaning to _______.'
+      },
+      explanation: '"legitimise" (hợp thức hóa, biến thành chính đáng) đồng nghĩa với "justify" (biện minh, làm cho hợp lý).',
+      status: ContentStatus.PUBLISHED,
+      options: {
+        create: [
+          { text: 'conceal', isCorrect: false, order: 0 },
+          { text: 'justify', isCorrect: true, order: 1 },
+          { text: 'restrict', isCorrect: false, order: 2 },
+          { text: 'calculate', isCorrect: false, order: 3 },
+        ]
+      }
+    }
+  })
+
+  const q38 = await prisma.question.create({
+    data: {
+      authorId: teacher.id,
+      skill: Skill.READING,
+      type: QuestionType.MULTIPLE_CHOICE,
+      difficulty: Difficulty.HARD,
+      content: {
+        passageTitle: 'CELEBRITY CARBON FOOTPRINTS & PRIVATE JETS',
+        passage: passageCelebrityEmissions,
+        text: 'Question 38: Which of the following can be inferred from the passage?'
+      },
+      explanation: 'Bài viết nhấn mạnh việc bù trừ carbon có thể làm giảm bớt áp lực môi trường tạm thời nhưng không giải quyết tận gốc và không thay đổi hành vi xả thải ("do little to address the root causes", "rarely neutralize emissions in any meaningful sense").',
+      status: ContentStatus.PUBLISHED,
+      options: {
+        create: [
+          { text: 'Carbon offsetting may alleviate certain environmental pressures but does not fundamentally transform emission-producing behaviour.', isCorrect: true, order: 0 },
+          { text: 'Carbon offsetting provides a comprehensive remedy capable of permanently eliminating luxury-related carbon emissions.', isCorrect: false, order: 1 },
+          { text: 'Carbon offsetting functions primarily as a public relations strategy without individuals’ sense of accountability towards the environment.', isCorrect: false, order: 2 },
+          { text: 'Carbon offsetting guarantees measurable climate benefits through market-based investment in renewable initiatives.', isCorrect: false, order: 3 },
+        ]
+      }
+    }
+  })
+
+  const q39 = await prisma.question.create({
+    data: {
+      authorId: teacher.id,
+      skill: Skill.READING,
+      type: QuestionType.MULTIPLE_CHOICE,
+      difficulty: Difficulty.HARD,
+      content: {
+        passageTitle: 'CELEBRITY CARBON FOOTPRINTS & PRIVATE JETS',
+        passage: passageCelebrityEmissions,
+        text: `Question 39: Where in the passage does the following sentence best fit?
+"This environment creates space for exaggerated claims of carbon neutrality without verifiable outcomes."`
+      },
+      explanation: '"This environment" (môi trường này) tiếp nối trực tiếp cụm từ "loosely regulated markets lacking consistent standards" (thị trường quản lý lỏng lẻo và thiếu tiêu chuẩn nhất quán) ở câu cuối đoạn 4, ngay trước vị trí [IV].',
+      status: ContentStatus.PUBLISHED,
+      options: {
+        create: [
+          { text: '[III]', isCorrect: false, order: 0 },
+          { text: '[I]', isCorrect: false, order: 1 },
+          { text: '[IV]', isCorrect: true, order: 2 },
+          { text: '[II]', isCorrect: false, order: 3 },
+        ]
+      }
+    }
+  })
+
+  const q40 = await prisma.question.create({
+    data: {
+      authorId: teacher.id,
+      skill: Skill.READING,
+      type: QuestionType.MULTIPLE_CHOICE,
+      difficulty: Difficulty.HARD,
+      content: {
+        passageTitle: 'CELEBRITY CARBON FOOTPRINTS & PRIVATE JETS',
+        passage: passageCelebrityEmissions,
+        text: 'Question 40: Which of the following best summarises the passage?'
+      },
+      explanation: 'Phương án D tóm tắt chính xác luận điểm toàn bài: Mặc dù người nổi tiếng dùng bù trừ carbon để giải quyết phát thải từ máy bay cá nhân, các nhà phê bình cho rằng các biện pháp này là chưa thỏa đáng và hành động bảo vệ khí hậu thực sự đòi hỏi phải cải cách mang tính hệ thống.',
+      status: ContentStatus.PUBLISHED,
+      options: {
+        create: [
+          { text: 'Carbon offset markets provide a practical mechanism for reducing the environmental impact of luxury air travel among high-profile individuals in response to growing criticism.', isCorrect: false, order: 0 },
+          { text: 'Although media scrutiny of celebrity jet use has intensified, public criticism tends to focus disproportionately on affluent individuals rather than the broader patterns of carbon consumption.', isCorrect: false, order: 1 },
+          { text: 'Growing public concern about luxury air travel has prompted calls for stricter government regulation of private aviation and improved oversight of carbon offset markets.', isCorrect: false, order: 2 },
+          { text: 'Although celebrities adopt carbon offsetting to address emissions from private air travel, critics argue that these measures are inadequate and effective climate action requires systemic reform.', isCorrect: true, order: 3 },
+        ]
+      }
+    }
+  })
+
   // Gán tất cả câu hỏi vào các Section của ExamTHPT
   const sec1Questions = [q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12]
   for (let i = 0; i < sec1Questions.length; i++) {
@@ -930,7 +1185,10 @@ For some people, especially those under long-term stress, cravings for sweets ma
     })
   }
 
-  const sec4Questions = [q23, q24, q25, q26, q27, q28, q29, q30]
+  const sec4Questions = [
+    q23, q24, q25, q26, q27, q28, q29, q30,
+    q31, q32, q33, q34, q35, q36, q37, q38, q39, q40
+  ]
   for (let i = 0; i < sec4Questions.length; i++) {
     await prisma.examQuestion.create({
       data: {
@@ -945,7 +1203,7 @@ For some people, especially those under long-term stress, cravings for sweets ma
   console.log('✅ Đã nạp thành công bộ đề thi chuẩn mới 2026!')
   console.log(`   Tên đề: ${examTHPT.title}`)
   console.log(`   Thời gian: ${examTHPT.duration} phút`)
-  console.log(`   Số lượng câu: 30 câu hỏi chuẩn (Đủ cả 4 dạng bài)`)
+  console.log(`   Số lượng câu: 40 câu hỏi trắc nghiệm chuẩn 100% (Đủ cả 4 dạng bài)`)
 }
 
 seedExams()

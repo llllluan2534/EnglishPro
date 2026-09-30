@@ -86,7 +86,7 @@ export default function MultipleChoiceViewer({ question, onAnswerChange, isSubmi
         })}
       </div>
       
-      {isCorrect === false && isSubmitted && !showAnswer && (
+      {result?.isCorrect === false && isSubmitted && !showAnswer && (
         <button
           onClick={() => setShowAnswer(true)}
           className="mt-4 px-6 py-3 font-bold font-mono bg-[#E7DEC9] text-[#1D2B4F] border-2 border-[#1D2B4F] shadow-[4px_4px_0_#1D2B4F] hover:translate-y-px hover:translate-x-px hover:shadow-[2px_2px_0_#1D2B4F] transition-all"
@@ -95,7 +95,7 @@ export default function MultipleChoiceViewer({ question, onAnswerChange, isSubmi
         </button>
       )}
 
-      {isCorrect === false && isSubmitted && showAnswer && correctAnswersData && (
+      {result?.isCorrect === false && isSubmitted && showAnswer && correctAnswersData && (
         <div className="mt-6 p-4 bg-[#FDECE9] border-2 border-[#C1432E] shadow-[4px_4px_0_#C1432E] animate-in slide-in-from-top-2 duration-300">
           <h4 className="font-bold text-[#C1432E] mb-2 font-mono">Đáp án đúng:</h4>
           <div className="flex flex-col gap-2">

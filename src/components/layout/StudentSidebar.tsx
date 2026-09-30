@@ -20,14 +20,34 @@ const navItems = [
   { href: '/leaderboard', icon: Trophy, label: 'Xếp hạng' },
 ]
 
-export default function StudentSidebar() {
+interface StudentSidebarProps {
+  user?: {
+    name?: string | null
+    email?: string | null
+  }
+}
+
+export default function StudentSidebar({ user }: StudentSidebarProps) {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [streakDays, setStreakDays] = useState<number | null>(null)
 
   // Auto-close mobile sidebar when navigating
   useEffect(() => {
     setIsMobileOpen(false)
+  }, [pathname])
+
+  // Fetch real streak
+  useEffect(() => {
+    fetch('/api/student/dashboard')
+      .then(res => res.json())
+      .then(data => {
+        if (data.streak?.current !== undefined) {
+          setStreakDays(data.streak.current)
+        }
+      })
+      .catch(() => {})
   }, [pathname])
 
   return (
@@ -152,16 +172,31 @@ export default function StudentSidebar() {
         })}
       </nav>
 
-      {/* Footer — streak + logout */}
-      <div className={cn("pt-5 pb-7 border-t-2 border-dashed border-[#E7DEC9]", isCollapsed ? "px-4" : "px-8")}>
+      {/* Footer — user info + streak + logout */}
+      <div className={cn("pt-4 pb-6 border-t-2 border-dashed border-[#E7DEC9]", isCollapsed ? "px-3" : "px-6")}>
         {!isCollapsed && (
-          <div
-            className="flex items-center justify-between px-3.5 py-2.5 border-[1.5px] border-[#E7DEC9] mb-4 text-[11px] text-[#6B7A94]"
-            style={{ fontFamily: "'JetBrains Mono', monospace" }}
-          >
-            <span>Chuỗi học</span>
-            <b className="text-[#C1432E] text-[13px]">7 ngày 🔥</b>
-          </div>
+          <>
+            {user?.name && (
+              <div className="flex items-center gap-2.5 mb-3 p-2 bg-[#FBF6EC] border border-[#E7DEC9]">
+                <div className="w-7 h-7 rounded-full bg-[#1D2B4F] text-[#FFFDF7] flex items-center justify-center font-bold text-xs shrink-0">
+                  {user.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="overflow-hidden">
+                  <div className="text-xs font-bold text-[#1D2B4F] truncate">{user.name}</div>
+                  <div className="text-[10px] text-[#6B7A94] font-mono leading-none">Học sinh</div>
+                </div>
+              </div>
+            )}
+            <div
+              className="flex items-center justify-between px-3.5 py-2 border-[1.5px] border-[#E7DEC9] mb-3 text-[11px] text-[#6B7A94]"
+              style={{ fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              <span>Chuỗi học</span>
+              <b className="text-[#C1432E] text-[13px]">
+                {streakDays !== null ? `${streakDays} ngày` : '0 ngày'} 🔥
+              </b>
+            </div>
+          </>
         )}
         <button
           onClick={() => signOut({ callbackUrl: '/login' })}

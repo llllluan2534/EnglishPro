@@ -27,7 +27,7 @@ export default async function StudentLayout({
 
   return (
     <div className="flex h-screen bg-[#FBF6EC] flex-col md:flex-row">
-      <StudentSidebar />
+      <StudentSidebar user={session.user} />
       <main className="flex-1 overflow-y-auto">
         <StudentPageWrapper>
           {children}

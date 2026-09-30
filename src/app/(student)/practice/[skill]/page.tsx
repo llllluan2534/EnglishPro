@@ -25,7 +25,7 @@ export default async function PracticeSkillPage({ params, searchParams }: Props)
   const skillName = skillNames[skill] || skill
 
   // Fetch topics if no topicId is selected
-  let topics = []
+  let topics: any[] = []
   if (!topicId) {
     topics = await prisma.topic.findMany({
       where: {
@@ -154,8 +154,20 @@ export default async function PracticeSkillPage({ params, searchParams }: Props)
             <div className="mt-8">
               <h2 className="text-2xl font-bold text-[#1D2B4F] mb-6 font-fraunces">Chọn chủ đề luyện tập</h2>
               {topics.length === 0 ? (
-                <div className="bg-[#FFFDF7] p-8 border border-[#E4D9BE]">
-                  <p className="text-[#6B7A94]">Chưa có chủ đề nào cho kỹ năng này.</p>
+                <div className="bg-[#FFFDF7] p-8 border-2 border-[#1D2B4F] shadow-[4px_4px_0_#E7DEC9] text-center">
+                  <h3 className="font-serif font-bold text-xl text-[#1D2B4F] mb-2" style={{ fontFamily: "'Fraunces', serif" }}>
+                    Ngân hàng câu hỏi tổng hợp
+                  </h3>
+                  <p className="text-[#6B7A94] text-sm mb-6 max-w-md mx-auto">
+                    Kỹ năng này chưa chia theo từng Unit bài học. Bạn có thể bắt đầu làm ngay các câu hỏi tổng hợp được chọn ngẫu nhiên.
+                  </p>
+                  <Link
+                    href={`/practice/${skill.toLowerCase()}?topicId=all`}
+                    className="inline-block px-6 py-3 bg-[#1D2B4F] text-[#FFFDF7] font-mono text-xs font-bold hover:bg-[#2A3C6D] transition-all shadow-[2px_2px_0_#C1432E]"
+                    style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                  >
+                    Bắt đầu luyện tập tổng hợp &rarr;
+                  </Link>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

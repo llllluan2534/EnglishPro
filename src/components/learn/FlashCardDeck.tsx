@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CheckCircle, RotateCcw, Loader2 } from 'lucide-react'
+import { CheckCircle, RotateCcw, Loader2, Volume2 } from 'lucide-react'
 
 interface FlashCardDeckProps {
   topicId?: string
@@ -14,6 +14,16 @@ export default function FlashCardDeck({ topicId }: FlashCardDeckProps) {
   const [sessionStats, setSessionStats] = useState({ correct: 0, total: 0 })
   const [isRevealed, setIsRevealed] = useState(false)
   const [typedWord, setTypedWord] = useState('')
+
+  const playPronunciation = useCallback((word: string) => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+      const utterance = new SpeechSynthesisUtterance(word)
+      utterance.lang = 'en-US'
+      utterance.rate = 0.9
+      window.speechSynthesis.speak(utterance)
+    }
+  }, [])
 
   const { data, isLoading } = useQuery({
     queryKey: ['flashcards-due', topicId],
@@ -139,7 +149,19 @@ export default function FlashCardDeck({ topicId }: FlashCardDeckProps) {
           
           {isRevealed ? (
             <>
-              <div className="phon" style={{ marginBottom: 10, fontSize: '32px', fontWeight: 'bold', color: '#C1432E' }}>{currentCard.vocabulary.word}</div>
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <div className="phon" style={{ fontSize: '32px', fontWeight: 'bold', color: '#C1432E' }}>
+                  {currentCard.vocabulary.word}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => playPronunciation(currentCard.vocabulary.word)}
+                  className="w-9 h-9 rounded-full border-2 border-[#1D2B4F] bg-[#FFFDF7] hover:bg-[#FBF6EC] flex items-center justify-center shadow-[2px_2px_0_#1D2B4F] active:shadow-none transition-all cursor-pointer"
+                  title="Nghe phát âm"
+                >
+                  <Volume2 size={18} className="text-[#C1432E]" />
+                </button>
+              </div>
               <div className="phon" style={{ color: 'var(--ink-soft)' }}>{currentCard.vocabulary.pronunciation}</div>
               
               <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px dashed var(--paper-line)', width: '100%' }}>
@@ -158,7 +180,10 @@ export default function FlashCardDeck({ topicId }: FlashCardDeckProps) {
             <form 
               onSubmit={(e) => { 
                 e.preventDefault(); 
-                if (typedWord.trim()) setIsRevealed(true); 
+                if (typedWord.trim()) {
+                  setIsRevealed(true);
+                  playPronunciation(currentCard.vocabulary.word);
+                }
               }} 
               style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
             >

@@ -1,6 +1,36 @@
 import FlashCardDeck from '@/components/learn/FlashCardDeck'
+import { prisma } from '@/lib/prisma'
+import Link from 'next/link'
 
-export default function FlashcardsPage() {
+export default async function FlashcardsPage({
+  searchParams
+}: {
+  searchParams: Promise<{ topicId?: string }>
+}) {
+  const resolvedParams = await searchParams
+  const selectedTopicId = resolvedParams?.topicId
+
+  // Fetch topics that contain vocabulary words
+  const topics = await prisma.topic.findMany({
+    where: {
+      status: 'PUBLISHED',
+      lessons: {
+        some: {
+          vocabularies: { some: {} }
+        }
+      }
+    },
+    orderBy: { order: 'asc' },
+    select: {
+      id: true,
+      title: true,
+      grade: true,
+      _count: {
+        select: { lessons: true }
+      }
+    }
+  })
+
   return (
     <>
       <style dangerouslySetInnerHTML={{
@@ -39,7 +69,7 @@ export default function FlashcardsPage() {
         .studio-flashcards .eyebrow::after {
           content:''; flex:1; height:1px; background:repeating-linear-gradient(90deg,var(--ink-soft) 0 6px, transparent 6px 12px); opacity:.5;
         }
-        .studio-flashcards .page-head { padding-bottom:32px; margin-bottom:40px; border-bottom:2px dashed #D8CDAE; }
+        .studio-flashcards .page-head { padding-bottom:32px; margin-bottom:32px; border-bottom:2px dashed #D8CDAE; }
         .studio-flashcards .page-head h1 { font-family:'Fraunces',serif; font-weight:600; font-size:38px; margin:0 0 12px; }
         .studio-flashcards .page-head h1 em { font-style:italic; color:var(--red); }
         .studio-flashcards .page-head p { font-size:15px; color:var(--ink-soft); max-width:560px; line-height:1.6; margin:0; }
@@ -94,7 +124,38 @@ export default function FlashcardsPage() {
             <p>Hệ thống sử dụng thuật toán Spaced Repetition để đưa từ vựng vào trí nhớ dài hạn.</p>
           </div>
 
-          <FlashCardDeck />
+          {/* Topic Filter Pills */}
+          <div className="flex flex-wrap items-center gap-2 mb-8 font-mono text-xs font-bold" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+            <span className="text-[#6B7A94] uppercase tracking-wider mr-2 text-[11px]">Chủ đề:</span>
+            <Link
+              href="/flashcards"
+              className={`px-3.5 py-1.5 border-2 transition-all ${
+                !selectedTopicId
+                  ? 'bg-[#1D2B4F] text-[#FFFDF7] border-[#1D2B4F] shadow-[2px_2px_0_#C1432E]'
+                  : 'bg-[#FFFDF7] text-[#6B7A94] border-[#E7DEC9] hover:border-[#1D2B4F]'
+              }`}
+            >
+              Tất cả thẻ cần ôn
+            </Link>
+            {topics.map(t => {
+              const active = selectedTopicId === t.id
+              return (
+                <Link
+                  key={t.id}
+                  href={`/flashcards?topicId=${t.id}`}
+                  className={`px-3.5 py-1.5 border-2 transition-all ${
+                    active
+                      ? 'bg-[#1D2B4F] text-[#FFFDF7] border-[#1D2B4F] shadow-[2px_2px_0_#C1432E]'
+                      : 'bg-[#FFFDF7] text-[#6B7A94] border-[#E7DEC9] hover:border-[#1D2B4F]'
+                  }`}
+                >
+                  {t.title}
+                </Link>
+              )
+            })}
+          </div>
+
+          <FlashCardDeck topicId={selectedTopicId} />
 
           <div className="tips">
             <div className="tip">

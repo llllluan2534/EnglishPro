@@ -3,7 +3,19 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 
 async function getDashboardData(userId: string) {
-  const [userXP, streak, dueCount, topics] = await Promise.all([
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+
+  const [
+    userXP,
+    streak,
+    dueCount,
+    topics,
+    completedProgress,
+    xpGrowthResult,
+    userBadges,
+    allBadges
+  ] = await Promise.all([
     prisma.userXP.findUnique({ where: { userId } }),
     prisma.streak.findUnique({ where: { userId } }),
     prisma.flashcardReview.count({
@@ -13,24 +25,107 @@ async function getDashboardData(userId: string) {
       where: { status: 'PUBLISHED' },
       orderBy: [{ grade: 'asc' }, { order: 'asc' }],
       take: 4,
-      include: { _count: { select: { lessons: true } } },
+      include: {
+        _count: { select: { lessons: true } },
+        lessons: { select: { id: true } }
+      },
     }),
+    prisma.lessonProgress.findMany({
+      where: { userId, isCompleted: true },
+      select: { lessonId: true }
+    }),
+    prisma.xPHistory.aggregate({
+      where: {
+        userId,
+        createdAt: { gte: sevenDaysAgo }
+      },
+      _sum: { amount: true }
+    }),
+    prisma.userBadge.findMany({
+      where: { userId },
+      include: { badge: true },
+      orderBy: { earnedAt: 'desc' },
+      take: 3
+    }),
+    prisma.badge.findMany({
+      take: 3,
+      orderBy: { xpReward: 'asc' }
+    })
   ])
-  return { userXP, streak, dueCount, topics }
+
+  // Count users with higher weeklyXP
+  const higherRankCount = await prisma.userXP.count({
+    where: {
+      weeklyXP: { gt: userXP?.weeklyXP ?? 0 }
+    }
+  })
+
+  // Map completed lessons for quick progress calculation
+  const completedSet = new Set(completedProgress.map(p => p.lessonId))
+
+  const topicsWithProgress = topics.map(t => {
+    const total = t.lessons.length
+    const completed = t.lessons.filter(l => completedSet.has(l.id)).length
+    const progressPercent = total > 0 ? Math.round((completed / total) * 100) : 0
+    return {
+      id: t.id,
+      title: t.title,
+      description: t.description,
+      grade: t.grade,
+      lessonCount: total,
+      progressPercent
+    }
+  })
+
+  // Format badges to display
+  let displayBadges: Array<{ name: string; description: string; isEarned: boolean; iconText: string }> = []
+  if (userBadges.length > 0) {
+    displayBadges = userBadges.map(ub => ({
+      name: ub.badge.name,
+      description: ub.badge.description,
+      isEarned: true,
+      iconText: ub.badge.name.substring(0, 2).toUpperCase()
+    }))
+  } else {
+    // If not earned yet, show targets
+    displayBadges = allBadges.map((b, i) => ({
+      name: b.name,
+      description: b.description,
+      isEarned: false,
+      iconText: `0${i + 1}`
+    }))
+  }
+
+  const weeklyRank = higherRankCount + 1
+  const weeklyXPGrowth = xpGrowthResult._sum.amount ?? (userXP?.weeklyXP ?? 0)
+
+  return {
+    userXP,
+    streak,
+    dueCount,
+    topics: topicsWithProgress,
+    weeklyRank,
+    weeklyXPGrowth,
+    displayBadges
+  }
 }
 
 export default async function DashboardPage() {
   const session = await auth()
   if (!session) return null
 
-  const { userXP, streak, dueCount, topics } = await getDashboardData(session.user.id)
+  const {
+    userXP,
+    streak,
+    dueCount,
+    topics,
+    weeklyRank,
+    weeklyXPGrowth,
+    displayBadges
+  } = await getDashboardData(session.user.id)
 
   const totalXP = userXP?.totalXP ?? 0
   const level = Math.max(1, Math.floor(Math.sqrt(totalXP / 50)))
-  const nextLevelXP = Math.pow(level + 1, 2) * 50
-  const currentLevelXP = Math.pow(level, 2) * 50
-  const progressPercent = Math.min(100, Math.max(0, ((totalXP - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100))
-
   const firstName = session.user.name?.split(' ').pop() ?? 'bạn'
 
   // Get current date string
@@ -38,7 +133,7 @@ export default async function DashboardPage() {
   const days = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7']
   const dayName = days[today.getDay()]
   
-  // Calculate week number (simple approximation)
+  // Calculate week number
   const startDate = new Date(today.getFullYear(), 0, 1)
   const daysPassed = Math.floor((today.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000))
   const weekNumber = Math.ceil((today.getDay() + 1 + daysPassed) / 7)
@@ -83,100 +178,300 @@ export default async function DashboardPage() {
           padding:40px 32px 0 96px;
           position:relative;
         }
+
         .studio-dashboard .margin-rule {
-          position:absolute; left:56px; top:0; bottom:0; width:2px; background:var(--red); opacity:.55;
+          position:absolute;
+          left:56px;
+          top:0;
+          bottom:0;
+          width:2px;
+          background:var(--red);
+          opacity:.55;
         }
         .studio-dashboard .margin-rule::before {
-          content:''; position:absolute; left:-5px; top:0; width:12px; height:12px; border-radius:50%; background:var(--red);
+          content:'';
+          position:absolute;
+          left:-5px;
+          top:0;
+          width:12px;
+          height:12px;
+          border-radius:50%;
+          background:var(--red);
         }
+
         .studio-dashboard .eyebrow {
-          font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:.12em; text-transform:uppercase;
-          color:var(--red); font-weight:700; display:flex; align-items:center; gap:10px; margin-bottom:10px;
+          font-family:'JetBrains Mono',monospace;
+          font-size:12px;
+          letter-spacing:.12em;
+          text-transform:uppercase;
+          color:var(--red);
+          font-weight:700;
+          display:flex;
+          align-items:center;
+          gap:10px;
+          margin-bottom:10px;
         }
         .studio-dashboard .eyebrow::after {
-          content:''; flex:1; height:1px; background:repeating-linear-gradient(90deg,var(--ink-soft) 0 6px, transparent 6px 12px); opacity:.5;
+          content:'';
+          flex:1;
+          height:1px;
+          background:repeating-linear-gradient(90deg,var(--ink-soft) 0 6px, transparent 6px 12px);
+          opacity:.5;
         }
 
-        /* HERO */
         .studio-dashboard .hero {
-          display:flex; justify-content:space-between; align-items:flex-end; gap:40px; padding-bottom:36px; margin-bottom:36px; border-bottom:2px dashed #D8CDAE; flex-wrap:wrap;
+          display:flex;
+          justify-content:space-between;
+          align-items:flex-end;
+          gap:40px;
+          padding-bottom:36px;
+          margin-bottom:36px;
+          border-bottom:2px dashed #D8CDAE;
+          flex-wrap:wrap;
         }
+
         .studio-dashboard .hero h1 {
-          font-family:'Fraunces',serif; font-weight:600; font-size:44px; line-height:1.08; margin:0 0 14px; letter-spacing:-.01em;
+          font-family:'Fraunces',serif;
+          font-weight:600;
+          font-size:44px;
+          line-height:1.08;
+          margin:0 0 14px;
+          letter-spacing:-.01em;
         }
-        .studio-dashboard .hero h1 em { font-style:italic; color:var(--red); }
-        .studio-dashboard .hero p { font-size:16px; color:var(--ink-soft); max-width:480px; line-height:1.6; margin:0;}
+        .studio-dashboard .hero h1 em {
+          font-style:italic;
+          color:var(--red);
+          font-weight:400;
+        }
+        .studio-dashboard .hero p {
+          font-size:15px;
+          color:var(--ink-soft);
+          max-width:560px;
+          line-height:1.6;
+          margin:0;
+        }
 
         .studio-dashboard .stamp {
-          width:150px; height:150px; border-radius:50%; border:3px solid var(--red); color:var(--red);
-          display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
-          transform:rotate(-9deg); flex-shrink:0; position:relative; background:rgba(193,67,46,0.03);
+          border:2.5px solid var(--ink);
+          padding:16px 22px;
+          background:var(--card);
+          transform:rotate(-2deg);
+          box-shadow:4px 4px 0 #E7DEC9;
+          text-align:center;
+          min-width:140px;
         }
-        .studio-dashboard .stamp::before {
-          content:''; position:absolute; inset:8px; border:1px solid var(--red); border-radius:50%; opacity:.5;
+        .studio-dashboard .stamp .lvl-label {
+          font-family:'JetBrains Mono',monospace;
+          font-size:10px;
+          letter-spacing:.15em;
+          color:var(--ink-soft);
+          text-transform:uppercase;
         }
-        .studio-dashboard .stamp .lvl-label { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.15em; font-weight:700;}
-        .studio-dashboard .stamp .lvl-num { font-family:'Fraunces',serif; font-size:40px; font-weight:700; line-height:1;}
-        .studio-dashboard .stamp .lvl-sub { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.1em; margin-top:2px;}
+        .studio-dashboard .stamp .lvl-num {
+          font-family:'Fraunces',serif;
+          font-size:48px;
+          font-weight:700;
+          line-height:1;
+          color:var(--ink);
+          margin:4px 0;
+        }
+        .studio-dashboard .stamp .lvl-sub {
+          font-family:'JetBrains Mono',monospace;
+          font-size:10px;
+          color:var(--red);
+          font-weight:700;
+          letter-spacing:.1em;
+        }
 
-        /* STAT ROW */
-        .studio-dashboard .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-bottom:48px; border-top:2px solid var(--ink); border-bottom:2px solid var(--ink);}
-        .studio-dashboard .stat { padding:22px 20px; border-right:1px dashed #D8CDAE; }
-        .studio-dashboard .stat:last-child { border-right:none; }
-        .studio-dashboard .stat .label { font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--ink-soft); font-weight:600; margin-bottom:8px;}
-        .studio-dashboard .stat .val { font-family:'JetBrains Mono',monospace; font-size:30px; font-weight:700; color:var(--ink); }
-        .studio-dashboard .stat .val span { font-size:14px; color:var(--ink-soft); font-weight:500; margin-left:2px;}
-        .studio-dashboard .stat .sub { font-size:12px; color:var(--ink-soft); margin-top:6px;}
-        .studio-dashboard .stat.accent .val { color:var(--red); }
+        .studio-dashboard .stats {
+          display:grid;
+          grid-template-columns:repeat(4,1fr);
+          gap:18px;
+          margin-bottom:44px;
+        }
+        .studio-dashboard .stat {
+          background:var(--card);
+          border:1px solid #E4D9BE;
+          padding:22px;
+          position:relative;
+          transition:transform .15s ease;
+        }
+        .studio-dashboard .stat:hover {
+          transform:translateY(-2px);
+        }
+        .studio-dashboard .stat .label {
+          font-family:'JetBrains Mono',monospace;
+          font-size:11px;
+          letter-spacing:.08em;
+          text-transform:uppercase;
+          color:var(--ink-soft);
+          margin-bottom:12px;
+        }
+        .studio-dashboard .stat .val {
+          font-family:'Fraunces',serif;
+          font-size:38px;
+          font-weight:600;
+          line-height:1;
+          margin-bottom:6px;
+        }
+        .studio-dashboard .stat .val span {
+          font-size:18px;
+          font-family:'Inter',sans-serif;
+          font-weight:400;
+          color:var(--ink-soft);
+          margin-left:4px;
+        }
+        .studio-dashboard .stat .sub {
+          font-size:12px;
+          color:var(--ink-soft);
+        }
+        .studio-dashboard .stat.accent {
+          border-color:var(--red);
+          background:linear-gradient(180deg,#FFFDF7 0%,#FBF4ED 100%);
+        }
+        .studio-dashboard .stat.accent .val {
+          color:var(--red);
+        }
 
-        /* LAYOUT COLUMNS */
-        .studio-dashboard .cols { display:grid; grid-template-columns:2fr 1fr; gap:44px; }
+        .studio-dashboard .cols {
+          display:grid;
+          grid-template-columns:1.7fr 1fr;
+          gap:36px;
+        }
 
-        .studio-dashboard .section-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:20px;}
-        .studio-dashboard .section-head h2 { font-family:'Fraunces',serif; font-size:24px; font-weight:600; margin:0;}
-        .studio-dashboard .section-head a { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--red); text-decoration:none; font-weight:700;}
+        .studio-dashboard .section-head {
+          display:flex;
+          align-items:baseline;
+          justify-content:space-between;
+          margin-bottom:20px;
+        }
+        .studio-dashboard .section-head h2 {
+          font-family:'Fraunces',serif;
+          font-size:22px;
+          margin:0;
+          font-weight:600;
+        }
+        .studio-dashboard .section-head a {
+          font-family:'JetBrains Mono',monospace;
+          font-size:12px;
+          color:var(--ink);
+          text-decoration:none;
+          font-weight:700;
+          border-bottom:1px solid var(--ink);
+          padding-bottom:2px;
+        }
 
-        .studio-dashboard .topics { display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+        .studio-dashboard .topics {
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:18px;
+        }
         .studio-dashboard .topic-card {
-          background:var(--card); border:1px solid #E4D9BE; padding:22px; position:relative; overflow:hidden;
-          clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%);
-          display: block;
-          text-decoration: none;
-          color: inherit;
+          background:var(--card);
+          border:1px solid #E4D9BE;
+          padding:24px;
+          text-decoration:none;
+          color:inherit;
+          display:flex;
+          flex-direction:column;
+          position:relative;
+          transition:border-color .15s ease;
         }
         .studio-dashboard .topic-card:hover {
-          background: #fdfaf0;
+          border-color:var(--ink);
         }
-        .studio-dashboard .topic-card::after {
-          content:''; position:absolute; top:0; right:0; width:22px; height:22px; background:var(--paper);
-          clip-path: polygon(0 0, 0 100%, 100% 100%); border-bottom:1px solid #E4D9BE; border-left:1px solid #E4D9BE;
+        .studio-dashboard .topic-card .grade {
+          font-family:'JetBrains Mono',monospace;
+          font-size:10px;
+          letter-spacing:.12em;
+          color:var(--red);
+          font-weight:700;
+          margin-bottom:8px;
         }
-        .studio-dashboard .topic-card .grade { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:var(--green); background:var(--green-soft); padding:3px 8px; display:inline-block; margin-bottom:12px;}
-        .studio-dashboard .topic-card h3 { font-family:'Fraunces',serif; font-size:18px; font-weight:600; margin:0 0 8px; line-height:1.3; color:var(--ink);}
-        .studio-dashboard .topic-card p { font-size:13px; color:var(--ink-soft); line-height:1.55; margin:0 0 16px;}
-        .studio-dashboard .topic-card .foot { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--ink-soft); border-top:1px dashed #E4D9BE; padding-top:12px; font-family:'JetBrains Mono',monospace;}
+        .studio-dashboard .topic-card h3 {
+          font-family:'Fraunces',serif;
+          font-size:19px;
+          margin:0 0 8px;
+          font-weight:600;
+          line-height:1.25;
+        }
+        .studio-dashboard .topic-card p {
+          font-size:13px;
+          color:var(--ink-soft);
+          margin:0 0 20px;
+          line-height:1.55;
+          flex:1;
+        }
+        .studio-dashboard .topic-card .foot {
+          display:flex;
+          justify-content:space-between;
+          font-family:'JetBrains Mono',monospace;
+          font-size:11px;
+          color:var(--ink-soft);
+          border-top:1px dashed #E7DEC9;
+          padding-top:12px;
+        }
 
-        /* RIGHT COLUMN */
         .studio-dashboard .ai-block {
-          background:var(--ink); color:#F3EFE2; padding:30px; position:relative; margin-bottom:22px;
-          border-left:5px solid var(--gold);
+          background:var(--ink);
+          color:#F3EFE2;
+          padding:28px;
+          margin-bottom:24px;
+          position:relative;
         }
-        .studio-dashboard .ai-block .tag { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--gold); letter-spacing:.1em; margin-bottom:14px; display:block;}
-        .studio-dashboard .ai-block h3 { font-family:'Fraunces',serif; font-size:22px; margin:0 0 10px;}
-        .studio-dashboard .ai-block p { font-size:13px; color:#B9BFCF; line-height:1.6; margin:0 0 20px;}
-        .studio-dashboard .ai-block button {
-          width:100%; padding:13px; background:var(--gold); color:var(--ink); border:none; font-weight:700; font-size:14px;
-          cursor:pointer; font-family:'Inter',sans-serif;
+        .studio-dashboard .ai-block .tag {
+          font-family:'JetBrains Mono',monospace;
+          font-size:10px;
+          letter-spacing:.15em;
+          color:var(--gold);
+          margin-bottom:12px;
+          display:block;
+        }
+        .studio-dashboard .ai-block h3 {
+          font-family:'Fraunces',serif;
+          font-size:22px;
+          margin:0 0 10px;
+          color:#FFFDF7;
+        }
+        .studio-dashboard .ai-block p {
+          font-size:13px;
+          color:#B9BFCF;
+          line-height:1.6;
+          margin:0 0 18px;
         }
 
-        .studio-dashboard .achievements { background:var(--card); border:1px solid #E4D9BE; padding:24px;}
-        .studio-dashboard .achievements h3 { font-family:'Fraunces',serif; font-size:18px; margin:0 0 18px; display:flex; align-items:center; gap:8px;}
-        .studio-dashboard .ach-item { display:flex; align-items:center; gap:14px; padding:10px 0; border-bottom:1px dashed #E4D9BE;}
-        .studio-dashboard .ach-item:last-child { border-bottom:none; }
+        .studio-dashboard .achievements {
+          background:var(--card);
+          border:1px solid #E4D9BE;
+          padding:24px;
+        }
+        .studio-dashboard .achievements h3 {
+          font-family:'Fraunces',serif;
+          font-size:18px;
+          margin:0 0 18px;
+        }
+        .studio-dashboard .ach-item {
+          display:flex;
+          gap:14px;
+          align-items:center;
+          padding:10px 0;
+          border-bottom:1px dashed #E7DEC9;
+        }
+        .studio-dashboard .ach-item:last-child {
+          border-bottom:none;
+        }
         .studio-dashboard .ach-badge {
-          width:38px; height:38px; border-radius:50%; border:2px solid var(--red); color:var(--red);
-          display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:13px;
-          flex-shrink:0; transform:rotate(-6deg);
+          width:36px;
+          height:36px;
+          border:1.5px solid var(--ink);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          font-family:'JetBrains Mono',monospace;
+          font-size:11px;
+          font-weight:700;
+          background:#FAF6EE;
+          flex-shrink:0;
         }
         .studio-dashboard .ach-item .t { font-size:13px; font-weight:600; }
         .studio-dashboard .ach-item .s { font-size:11px; color:var(--ink-soft); }
@@ -204,7 +499,7 @@ export default async function DashboardPage() {
             <div className="stamp">
               <div className="lvl-label">CẤP ĐỘ</div>
               <div className="lvl-num">{level}</div>
-              <div className="lvl-sub">XUẤT SẮC</div>
+              <div className="lvl-sub">{totalXP} XP</div>
             </div>
           </div>
 
@@ -221,13 +516,13 @@ export default async function DashboardPage() {
             </div>
             <div className="stat">
               <div className="label">Hạng tuần</div>
-              <div className="val">#12</div>
-              <div className="sub">Top 5% chăm nhất</div>
+              <div className="val">#{weeklyRank}</div>
+              <div className="sub">{weeklyRank <= 3 ? 'Top dẫn đầu bảng' : 'Bảng xếp hạng chung'}</div>
             </div>
             <div className="stat">
               <div className="label">Tăng trưởng XP</div>
-              <div className="val">+120</div>
-              <div className="sub">So với tuần trước</div>
+              <div className="val">+{weeklyXPGrowth}</div>
+              <div className="sub">7 ngày gần nhất</div>
             </div>
           </div>
 
@@ -244,8 +539,10 @@ export default async function DashboardPage() {
                     <h3>{topic.title}</h3>
                     <p>{topic.description || 'Không có mô tả'}</p>
                     <div className="foot">
-                      <span>{topic._count.lessons} bài học</span>
-                      <span>0%</span>
+                      <span>{topic.lessonCount} bài học</span>
+                      <span className={topic.progressPercent > 0 ? 'text-[#4C7A6B] font-bold' : ''}>
+                        {topic.progressPercent}%
+                      </span>
                     </div>
                   </Link>
                 ))}
@@ -254,25 +551,45 @@ export default async function DashboardPage() {
 
             <section>
               <div className="ai-block">
-                <span className="tag">◆ LUYỆN TẬP AI</span>
-                <h3>Đề luyện riêng cho bạn</h3>
-                <p>Hệ thống phân tích điểm yếu và sinh bài tập độc quyền, sát với năng lực hiện tại của bạn.</p>
-                <button>Bắt đầu ngay &rarr;</button>
+                <span className="tag">◆ LUYỆN TẬP THÔNG MINH</span>
+                <h3>Luyện tập 4 kỹ năng</h3>
+                <p>Hệ thống hỗ trợ luyện Nghe, Nói, Đọc, Viết có AI chấm phát âm và ngữ pháp tức thì.</p>
+                <Link
+                  href="/practice"
+                  className="inline-block px-5 py-2.5 bg-[#E3A73B] text-[#1D2B4F] font-mono text-xs font-bold hover:bg-[#f0b543] transition-colors"
+                  style={{ fontFamily: "'JetBrains Mono', monospace" }}
+                >
+                  Bắt đầu ngay &rarr;
+                </Link>
               </div>
 
               <div className="achievements">
-                <h3>Thành tích nổi bật</h3>
-                <div className="ach-item">
-                  <div className="ach-badge">7d</div>
-                  <div><div className="t">Chuỗi 7 ngày</div><div className="s">Đang giữ nhịp độ rất tốt</div></div>
-                </div>
-                <div className="ach-item">
-                  <div className="ach-badge">A+</div>
-                  <div><div className="t">Xạ thủ Unit 1</div><div className="s">Hoàn thành với điểm A+</div></div>
-                </div>
-                <div className="ach-item">
-                  <div className="ach-badge">01</div>
-                  <div><div className="t">Người mới</div><div className="s">Hoàn thành đăng ký và setup</div></div>
+                <h3>Thành tích & Huy hiệu</h3>
+                <div className="space-y-1">
+                  {displayBadges.map((badge, idx) => (
+                    <div key={idx} className="ach-item">
+                      <div
+                        className={`ach-badge ${
+                          badge.isEarned
+                            ? 'bg-[#DCE9E3] text-[#4C7A6B] border-[#4C7A6B]'
+                            : 'bg-[#FBF6EC] text-[#6B7A94] border-[#E7DEC9]'
+                        }`}
+                      >
+                        {badge.iconText}
+                      </div>
+                      <div>
+                        <div className="t flex items-center gap-2">
+                          <span>{badge.name}</span>
+                          {badge.isEarned && (
+                            <span className="text-[10px] font-mono px-1.5 py-0.2 bg-[#DCE9E3] text-[#4C7A6B] rounded">
+                              Đã đạt
+                            </span>
+                          )}
+                        </div>
+                        <div className="s">{badge.description}</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </section>

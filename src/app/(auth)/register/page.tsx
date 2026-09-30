@@ -25,7 +25,7 @@ export default function RegisterPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<FormData>({ resolver: zodResolver(schema) })
+  } = useForm<FormData>({ resolver: zodResolver(schema) as any })
 
   const onSubmit = async (data: FormData) => {
     setServerError(null)

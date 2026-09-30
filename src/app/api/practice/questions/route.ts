@@ -12,7 +12,8 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url)
     const skillParam = searchParams.get('skill')?.toUpperCase()
-    const topicId = searchParams.get('topicId')
+    const rawTopicId = searchParams.get('topicId')
+    const topicId = (rawTopicId === 'all' || !rawTopicId) ? null : rawTopicId
     const limit = parseInt(searchParams.get('limit') || '5', 10)
 
     if (!skillParam || !(skillParam in Skill)) {

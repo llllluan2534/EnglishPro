@@ -46,3 +46,7 @@ next-env.d.ts
 # Agent files
 AGENTS.md
 CLAUDE.md
+
+# Local raw data and large audio assets
+/data
+/public/audio
