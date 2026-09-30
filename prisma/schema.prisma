@@ -86,6 +86,7 @@ model User {
   updatedAt     DateTime  @updatedAt
 
   // Thông tin thêm
+  dateOfBirth   DateTime? // Ngày tháng năm sinh
   grade         Int?      // Lớp: 10, 11, 12 (chỉ học sinh)
   school        String?   // Tên trường
   bio           String?   // Giới thiệu (giáo viên)

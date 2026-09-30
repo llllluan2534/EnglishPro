@@ -6,8 +6,18 @@ import { z } from 'zod'
 const registerSchema = z.object({
   name: z.string().min(2, 'Tên phải có ít nhất 2 ký tự'),
   email: z.string().email('Email không hợp lệ'),
-  password: z.string().min(8, 'Mật khẩu phải có ít nhất 8 ký tự'),
-  grade: z.number().int().min(10).max(12).optional(),
+  password: z.string().min(6, 'Mật khẩu phải có ít nhất 6 ký tự'),
+  role: z.enum(['STUDENT', 'TEACHER']).default('STUDENT'),
+  dateOfBirth: z.string().optional(),
+  grade: z.coerce.number().int().min(10).max(12).optional().nullable(),
+}).refine((data) => {
+  if (data.role === 'STUDENT' && !data.grade) {
+    return false
+  }
+  return true
+}, {
+  message: 'Vui lòng chọn khối lớp học (10, 11 hoặc 12)',
+  path: ['grade'],
 })
 
 export async function POST(req: NextRequest) {
@@ -22,7 +32,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { name, email, password, grade } = parsed.data
+    const { name, email, password, role, grade, dateOfBirth } = parsed.data
 
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
@@ -32,23 +42,41 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    let parsedDob: Date | null = null
+    if (dateOfBirth) {
+      const d = new Date(dateOfBirth)
+      if (!isNaN(d.getTime())) {
+        parsedDob = d
+      }
+    }
+
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: await hash(password, 12),
-        grade,
-        role: 'STUDENT',
-        // Khởi tạo XP và Streak ngay khi đăng ký
-        userXP: { create: {} },
-        streak: { create: {} },
+        role,
+        grade: role === 'STUDENT' ? grade : null,
+        dateOfBirth: parsedDob,
+        // Khởi tạo XP và Streak ngay khi đăng ký cho học sinh
+        ...(role === 'STUDENT' ? {
+          userXP: { create: {} },
+          streak: { create: {} },
+        } : {}),
       },
-      select: { id: true, name: true, email: true, role: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        grade: true,
+        dateOfBirth: true,
+      },
     })
 
     return NextResponse.json({ user }, { status: 201 })
   } catch (error) {
     console.error('Registration error:', error)
-    return NextResponse.json({ error: 'Lỗi server' }, { status: 500 })
+    return NextResponse.json({ error: 'Lỗi máy chủ' }, { status: 500 })
   }
 }
