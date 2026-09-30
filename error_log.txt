@@ -1,0 +1,34 @@
+PrismaClientKnownRequestError: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].lessonProgress.upsert()` invocation in
+D:\GitHub\english-learning-app\.next\dev\server\chunks\[root-of-the-server]__0pwplds._.js:394:176
+
+  391 }
+  392 const userId = session.user.id;
+  393 // 1. Cập nhật tiến độ bài học
+→ 394 const progress = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].lessonProgress.upsert(
+Foreign key constraint violated on the constraint: `lesson_progress_userId_fkey`
+    at Gr.handleRequestError (D:\GitHub\english-learning-app\node_modules\.pnpm\@prisma+client@7.7.0_prisma_c59191c4feebce653dec790451749887\node_modules\@prisma\client\runtime\client.js:65:8286)
+    at Gr.handleAndLogRequestError (D:\GitHub\english-learning-app\node_modules\.pnpm\@prisma+client@7.7.0_prisma_c59191c4feebce653dec790451749887\node_modules\@prisma\client\runtime\client.js:65:7581)
+    at Gr.request (D:\GitHub\english-learning-app\node_modules\.pnpm\@prisma+client@7.7.0_prisma_c59191c4feebce653dec790451749887\node_modules\@prisma\client\runtime\client.js:65:7288)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async a (D:\GitHub\english-learning-app\node_modules\.pnpm\@prisma+client@7.7.0_prisma_c59191c4feebce653dec790451749887\node_modules\@prisma\client\runtime\client.js:75:6730)
+    at async POST (D:\GitHub\english-learning-app\.next\dev\server\chunks\[root-of-the-server]__0pwplds._.js:394:26)
+    at async AppRouteRouteModule.do (D:\GitHub\english-learning-app\node_modules\.pnpm\next@16.2.3_@babel+core@7.2_4ef84c59e56e8ef93b8ffec4ca050059\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40115)
+    at async AppRouteRouteModule.handle (D:\GitHub\english-learning-app\node_modules\.pnpm\next@16.2.3_@babel+core@7.2_4ef84c59e56e8ef93b8ffec4ca050059\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47321)
+    at async responseGenerator (D:\GitHub\english-learning-app\.next\dev\server\chunks\02_9_next_03gz1l7._.js:18303:38)
+    at async AppRouteRouteModule.handleResponse (D:\GitHub\english-learning-app\node_modules\.pnpm\next@16.2.3_@babel+core@7.2_4ef84c59e56e8ef93b8ffec4ca050059\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:227216)
+    at async handleResponse (D:\GitHub\english-learning-app\.next\dev\server\chunks\02_9_next_03gz1l7._.js:18366:32)
+    at async Module.handler (D:\GitHub\english-learning-app\.next\dev\server\chunks\02_9_next_03gz1l7._.js:18420:13)
+    at async DevServer.renderToResponseWithComponentsImpl (D:\GitHub\english-learning-app\node_modules\.pnpm\next@16.2.3_@babel+core@7.2_4ef84c59e56e8ef93b8ffec4ca050059\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (D:\GitHub\english-learning-app\node_modules\.pnpm\next@16.2.3_@babel+core@7.2_4ef84c59e56e8ef93b8ffec4ca050059\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (D:\GitHub\english-learning-app\node_modules\.pnpm\next@16.2.3_@babel+core@7.2_4ef84c59e56e8ef93b8ffec4ca050059\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (D:\GitHub\english-learning-app\node_modules\.pnpm\next@16.2.3_@babel+core@7.2_4ef84c59e56e8ef93b8ffec4ca050059\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (D:\GitHub\english-learning-app\node_modules\.pnpm\next@16.2.3_@babel+core@7.2_4ef84c59e56e8ef93b8ffec4ca050059\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (D:\GitHub\english-learning-app\node_modules\.pnpm\next@16.2.3_@babel+core@7.2_4ef84c59e56e8ef93b8ffec4ca050059\node_modules\next\dist\server\base-server.js:934:17)
+    at async D:\GitHub\english-learning-app\node_modules\.pnpm\next@16.2.3_@babel+core@7.2_4ef84c59e56e8ef93b8ffec4ca050059\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (D:\GitHub\english-learning-app\node_modules\.pnpm\next@16.2.3_@babel+core@7.2_4ef84c59e56e8ef93b8ffec4ca050059\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (D:\GitHub\english-learning-app\node_modules\.pnpm\next@16.2.3_@babel+core@7.2_4ef84c59e56e8ef93b8ffec4ca050059\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (D:\GitHub\english-learning-app\node_modules\.pnpm\next@16.2.3_@babel+core@7.2_4ef84c59e56e8ef93b8ffec4ca050059\node_modules\next\dist\server\lib\router-server.js:266:21)
+    at async handleRequest (D:\GitHub\english-learning-app\node_modules\.pnpm\next@16.2.3_@babel+core@7.2_4ef84c59e56e8ef93b8ffec4ca050059\node_modules\next\dist\server\lib\router-server.js:465:24)
+    at async requestHandlerImpl (D:\GitHub\english-learning-app\node_modules\.pnpm\next@16.2.3_@babel+core@7.2_4ef84c59e56e8ef93b8ffec4ca050059\node_modules\next\dist\server\lib\router-server.js:514:13)
+    at async Server.requestListener (D:\GitHub\english-learning-app\node_modules\.pnpm\next@16.2.3_@babel+core@7.2_4ef84c59e56e8ef93b8ffec4ca050059\node_modules\next\dist\server\lib\start-server.js:225:13)

@@ -546,19 +546,250 @@ async function main() {
     <li>• Các hoạt động thường diễn ra (what people often do to celebrate the day)</li>
   </ul>
 </div>
-                ` : `<h2>${lessonTitles[i].title}</h2><p>Nội dung chi tiết sẽ được cập nhật sau.</p>`
+                ` : i === 0 ? `
+<div style="font-family: 'Inter', sans-serif; color: #1D2B4F;">
+  <h2 style="color: #C1432E; font-family: 'Fraunces', serif; font-size: 24px; margin-bottom: 24px;">Vocabulary: Family Life</h2>
+  <div style="margin-bottom: 32px; overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; border: 2px solid #E7DEC9; background: #FFFDF7; text-align: left; box-shadow: 4px 4px 0 #E7DEC9;">
+      <thead>
+        <tr>
+          <th style="padding: 16px; border: 1px solid #E7DEC9; background: #FDF3EC; color: #C1432E; font-family: 'Fraunces', serif;">Từ vựng / Phát âm</th>
+          <th style="padding: 16px; border: 1px solid #E7DEC9; background: #FDF3EC; color: #C1432E; font-family: 'Fraunces', serif;">Ý nghĩa</th>
+          <th style="padding: 16px; border: 1px solid #E7DEC9; background: #FDF3EC; color: #C1432E; font-family: 'Fraunces', serif;">Ví dụ</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Benefit</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ˈbenɪfɪt/ (n)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Lợi ích</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">Spending time with family brings many emotional benefits.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Bond</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/bɒnd/ (n)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Sự gắn bó, kết nối</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">Family activities help strengthen the bond between parents and children.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Breadwinner</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ˈbredwɪnə/ (n)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Người trụ cột gia đình</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">My father is the breadwinner in your family.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Character</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ˈkærəktə/ (n)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Tính cách</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">Doing housework helps children build good character.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Cheer up</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/tʃɪə ʌp/ (v)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Cổ vũ, làm cho ai đó vui lên</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">My parents always cheer me up when I feel sad.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Damage</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ˈdæmɪdʒ/ (v)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Phá hỏng, làm hỏng</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">Children may damage things when doing housework.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Gratitude</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ˈgrætɪtjuːd/ (n)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Sự biết ơn, lòng biết ơn</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">Children should show gratitude to their parents.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Grocery</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ˈgroʊsəri/ (n)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Thực phẩm và tạp hóa</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">My mother goes grocery shopping every weekend.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Heavy lifting</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ˌhevi ˈlɪftɪŋ/ (n)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Mang vác nặng</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">My father does the heavy lifting in our house.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Homemaker</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ˈhoʊmmeɪkə/ (n)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Người nội trợ</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">My mother is a homemaker who takes care of our family.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Laundry</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ˈlɔːndri/ (n)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Quần áo, đồ giặt là</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">I help my mother with the laundry on Sundays.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Manner</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ˈmænə/ (n)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Tác phong, cách ứng xử</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">Good table manners are important in family meals.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Responsibility</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/rɪˌspɑːnsəˈbɪləti/ (n)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Trách nhiệm</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">Each family member has their own responsibility.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Routine</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ruːˈtiːn/ (n)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Lề thường, công việc hàng ngày</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">Our family has a daily routine for housework.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Rubbish</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ˈrʌbɪʃ/ (n)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Rác rưởi</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">Taking out the rubbish is my daily chore.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Spotlessly</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ˈspɒtləsli/ (adv)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Không tì vết</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">We all feel happy when we see our home spotlessly clean.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Strengthen</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ˈstreŋθən/ (v)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Củng cố, làm mạnh thêm</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">Family meals strengthen our relationships.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Support</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/səˈpɔːt/ (n, v)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Ủng hộ, hỗ trợ</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">Parents should support their children's education.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Truthful</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ˈtruːθfl/ (adj)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Trung thực</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">Being truthful with family members is very important.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Value</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ˈvæljuː/ (n)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Giá trị</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">Family values are passed down from generation to generation.</td>
+        </tr>
+        <tr>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top;">
+            <p style="font-weight: bold; font-size: 16px; margin: 0 0 4px;">Washing-up</p>
+            <p style="font-size: 14px; color: #6B7A94; font-family: 'JetBrains Mono', monospace; margin: 0;">/ˌwɒʃɪŋ ˈʌp/ (n)</p>
+          </td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px;">Rửa chén bát</td>
+          <td style="padding: 16px; border: 1px solid #E7DEC9; vertical-align: top; font-size: 15px; font-style: italic;">After dinner, we take turns doing the washing-up.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+` : `<h2>${lessonTitles[i].title}</h2><p>Nội dung chi tiết sẽ được cập nhật sau.</p>`
               }
-            }
+            },
+            ...(i === 0 ? [{
+              order: 2,
+              type: 'flashcard_set',
+              content: {
+                cards: [
+                  { front: 'Lợi ích', back: 'Benefit', example: 'Spending time with family brings many emotional benefits.' },
+                  { front: 'Sự gắn bó, kết nối', back: 'Bond', example: 'Family activities help strengthen the bond between parents and children.' },
+                  { front: 'Người trụ cột gia đình', back: 'Breadwinner', example: 'My father is the breadwinner in your family.' },
+                  { front: 'Tính cách', back: 'Character', example: 'Doing housework helps children build good character.' },
+                  { front: 'Cổ vũ, làm cho ai đó vui lên', back: 'Cheer up', example: 'My parents always cheer me up when I feel sad.' },
+                  { front: 'Phá hỏng, làm hỏng', back: 'Damage', example: 'Children may damage things when doing housework.' },
+                  { front: 'Sự biết ơn, lòng biết ơn', back: 'Gratitude', example: 'Children should show gratitude to their parents.' },
+                  { front: 'Thực phẩm và tạp hóa', back: 'Grocery', example: 'My mother goes grocery shopping every weekend.' },
+                  { front: 'Mang vác nặng', back: 'Heavy lifting', example: 'My father does the heavy lifting in our house.' },
+                  { front: 'Người nội trợ', back: 'Homemaker', example: 'My mother is a homemaker who takes care of our family.' },
+                  { front: 'Quần áo, đồ giặt là', back: 'Laundry', example: 'I help my mother with the laundry on Sundays.' },
+                  { front: 'Tác phong, cách ứng xử', back: 'Manner', example: 'Good table manners are important in family meals.' },
+                  { front: 'Trách nhiệm', back: 'Responsibility', example: 'Each family member has their own responsibility.' },
+                  { front: 'Lề thường, công việc hàng ngày', back: 'Routine', example: 'Our family has a daily routine for housework.' },
+                  { front: 'Rác rưởi', back: 'Rubbish', example: 'Taking out the rubbish is my daily chore.' },
+                  { front: 'Không tì vết', back: 'Spotlessly', example: 'We all feel happy when we see our home spotlessly clean.' },
+                  { front: 'Củng cố, làm mạnh thêm', back: 'Strengthen', example: 'Family meals strengthen our relationships.' },
+                  { front: 'Ủng hộ, hỗ trợ', back: 'Support', example: 'Parents should support their children\'s education.' },
+                  { front: 'Trung thực', back: 'Truthful', example: 'Being truthful with family members is very important.' },
+                  { front: 'Giá trị', back: 'Value', example: 'Family values are passed down from generation to generation.' },
+                  { front: 'Rửa chén bát', back: 'Washing-up', example: 'After dinner, we take turns doing the washing-up.' },
+                ]
+              }
+            }] : [])
           ]
         },
         // Thêm từ vựng mẫu cho bài Vocabulary đầu tiên
         ...(i === 0 ? {
           vocabularies: {
             create: [
-              { word: 'household chores', pronunciation: '/ˈhaʊshəʊld tʃɔːrz/', definition: 'công việc nhà', example: 'I often help my parents with household chores.', partOfSpeech: 'n.' },
-              { word: 'routine', pronunciation: '/ruːˈtiːn/', definition: 'thói quen, việc làm hàng ngày', example: 'It is part of my daily routine.', partOfSpeech: 'n.' },
-              { word: 'benefit', pronunciation: '/ˈbenɪfɪt/', definition: 'lợi ích', example: 'There are many benefits of doing housework.', partOfSpeech: 'n.' },
-              { word: 'support', pronunciation: '/səˈpɔːt/', definition: 'sự hỗ trợ', example: 'Family support is very important.', partOfSpeech: 'n.' },
+              { word: 'Benefit', pronunciation: '/ˈbenɪfɪt/', definition: 'Lợi ích', example: 'Spending time with family brings many emotional benefits.', partOfSpeech: 'n.' },
+              { word: 'Bond', pronunciation: '/bɒnd/', definition: 'Sự gắn bó, kết nối', example: 'Family activities help strengthen the bond between parents and children.', partOfSpeech: 'n.' },
+              { word: 'Breadwinner', pronunciation: '/ˈbredwɪnə/', definition: 'Người trụ cột gia đình', example: 'My father is the breadwinner in your family.', partOfSpeech: 'n.' },
+              { word: 'Character', pronunciation: '/ˈkærəktə/', definition: 'Tính cách', example: 'Doing housework helps children build good character.', partOfSpeech: 'n.' },
+              { word: 'Cheer up', pronunciation: '/tʃɪə ʌp/', definition: 'Cổ vũ, làm cho ai đó vui lên', example: 'My parents always cheer me up when I feel sad.', partOfSpeech: 'v.' },
+              { word: 'Damage', pronunciation: '/ˈdæmɪdʒ/', definition: 'Phá hỏng, làm hỏng', example: 'Children may damage things when doing housework.', partOfSpeech: 'v.' },
+              { word: 'Gratitude', pronunciation: '/ˈgrætɪtjuːd/', definition: 'Sự biết ơn, lòng biết ơn', example: 'Children should show gratitude to their parents.', partOfSpeech: 'n.' },
+              { word: 'Grocery', pronunciation: '/ˈgroʊsəri/', definition: 'Thực phẩm và tạp hóa', example: 'My mother goes grocery shopping every weekend.', partOfSpeech: 'n.' },
+              { word: 'Heavy lifting', pronunciation: '/ˌhevi ˈlɪftɪŋ/', definition: 'Mang vác nặng', example: 'My father does the heavy lifting in our house.', partOfSpeech: 'n.' },
+              { word: 'Homemaker', pronunciation: '/ˈhoʊmmeɪkə/', definition: 'Người nội trợ', example: 'My mother is a homemaker who takes care of our family.', partOfSpeech: 'n.' },
+              { word: 'Laundry', pronunciation: '/ˈlɔːndri/', definition: 'Quần áo, đồ giặt là', example: 'I help my mother with the laundry on Sundays.', partOfSpeech: 'n.' },
+              { word: 'Manner', pronunciation: '/ˈmænə/', definition: 'Tác phong, cách ứng xử', example: 'Good table manners are important in family meals.', partOfSpeech: 'n.' },
+              { word: 'Responsibility', pronunciation: '/rɪˌspɑːnsəˈbɪləti/', definition: 'Trách nhiệm', example: 'Each family member has their own responsibility.', partOfSpeech: 'n.' },
+              { word: 'Routine', pronunciation: '/ruːˈtiːn/', definition: 'Lề thường, công việc hàng ngày', example: 'Our family has a daily routine for housework.', partOfSpeech: 'n.' },
+              { word: 'Rubbish', pronunciation: '/ˈrʌbɪʃ/', definition: 'Rác rưởi', example: 'Taking out the rubbish is my daily chore.', partOfSpeech: 'n.' },
+              { word: 'Spotlessly', pronunciation: '/ˈspɒtləsli/', definition: 'Không tì vết', example: 'We all feel happy when we see our home spotlessly clean.', partOfSpeech: 'adv.' },
+              { word: 'Strengthen', pronunciation: '/ˈstreŋθən/', definition: 'Củng cố, làm mạnh thêm', example: 'Family meals strengthen our relationships.', partOfSpeech: 'v.' },
+              { word: 'Support', pronunciation: '/səˈpɔːt/', definition: 'Ủng hộ, hỗ trợ', example: 'Parents should support their children\'s education.', partOfSpeech: 'n., v.' },
+              { word: 'Truthful', pronunciation: '/ˈtruːθfl/', definition: 'Trung thực', example: 'Being truthful with family members is very important.', partOfSpeech: 'adj.' },
+              { word: 'Value', pronunciation: '/ˈvæljuː/', definition: 'Giá trị', example: 'Family values are passed down from generation to generation.', partOfSpeech: 'n.' },
+              { word: 'Washing-up', pronunciation: '/ˌwɒʃɪŋ ˈʌp/', definition: 'Rửa chén bát', example: 'After dinner, we take turns doing the washing-up.', partOfSpeech: 'n.' },
             ],
           }
         } : {})

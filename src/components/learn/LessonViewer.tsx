@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import { LessonContent } from '@prisma/client'
 import MultipleChoice from './MultipleChoice'
+import FlashcardSetBlock from './FlashcardSetBlock'
 import { cn } from '@/lib/utils'
 import { ChevronRight, ChevronLeft, CheckCircle2 } from 'lucide-react'
 
 interface LessonViewerProps {
   contents: LessonContent[]
-  onComplete: () => void
+  onComplete: (score?: number) => void
   prevLessonId?: string
   nextLessonId?: string
   topicId?: string
@@ -26,7 +27,13 @@ export default function LessonViewer({ contents, onComplete, prevLessonId, nextL
       setCurrentPage(c => c + 1)
       window.scrollTo(0, 0)
     } else {
-      onComplete()
+      let score = undefined
+      const answeredKeys = Object.keys(answers)
+      if (answeredKeys.length > 0) {
+        const correctAnswers = Object.values(answers).filter(Boolean).length
+        score = (correctAnswers / answeredKeys.length) * 100
+      }
+      onComplete(score)
     }
   }
 
@@ -111,6 +118,8 @@ export default function LessonViewer({ contents, onComplete, prevLessonId, nextL
             }}
           />
         )
+      case 'flashcard_set':
+        return <FlashcardSetBlock cards={data.cards} />
       default:
         return <div className="p-4 bg-orange-50 text-orange-600 rounded-2xl border border-orange-100 font-medium">Định dạng nội dung [{block.type}] chưa hỗ trợ.</div>
     }
@@ -166,7 +175,15 @@ export default function LessonViewer({ contents, onComplete, prevLessonId, nextL
         <div className="flex items-center gap-4">
           {isLastPage && (
             <button
-              onClick={onComplete}
+              onClick={() => {
+                let score = undefined
+                const answeredKeys = Object.keys(answers)
+                if (answeredKeys.length > 0) {
+                  const correctAnswers = Object.values(answers).filter(Boolean).length
+                  score = (correctAnswers / answeredKeys.length) * 100
+                }
+                onComplete(score)
+              }}
               className="h-[68px] px-8 flex items-center justify-center gap-3 font-bold uppercase text-sm tracking-widest font-mono transition-colors border border-[#4C7A6B] bg-[#4C7A6B] text-[#FFFDF7] hover:bg-[#3d6356]"
             >
               <CheckCircle2 size={16} />

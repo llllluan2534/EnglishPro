@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Play, CheckCircle2 } from 'lucide-react'
 
 async function getTopicWithLessons(topicId: string, userId: string) {
-  const [topic, lessonProgress] = await Promise.all([
+  const [topic, lessonProgress, enrollment] = await Promise.all([
     prisma.topic.findUnique({
       where: { id: topicId, status: 'PUBLISHED' },
       include: {

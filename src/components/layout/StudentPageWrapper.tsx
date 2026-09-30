@@ -7,12 +7,12 @@ export default function StudentPageWrapper({ children }: { children: React.React
   
   // Nếu là các trang sử dụng giao diện Studio Preview, ta cho tràn viền 100%
   if (
-    pathname === '/dashboard' || 
+    pathname.startsWith('/dashboard') || 
     pathname.startsWith('/learn') || 
-    pathname === '/practice' || 
-    pathname === '/flashcards' || 
-    pathname === '/exam' || 
-    pathname === '/leaderboard'
+    pathname.startsWith('/practice') || 
+    pathname.startsWith('/flashcards') || 
+    pathname.startsWith('/exam') || 
+    pathname.startsWith('/leaderboard')
   ) {
     return <div className="w-full min-h-full">{children}</div>
   }

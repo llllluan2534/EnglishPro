@@ -1,6 +1,43 @@
+'use client'
+
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import { Loader2 } from 'lucide-react'
 
 export default function LeaderboardPage() {
+  const [data, setData] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetch('/api/leaderboard')
+      .then(res => res.json())
+      .then(resData => {
+        setData(resData)
+        setLoading(false)
+      })
+      .catch(err => {
+        console.error(err)
+        setLoading(false)
+      })
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <Loader2 className="w-10 h-10 animate-spin text-[#C1432E]" />
+      </div>
+    )
+  }
+
+  const leaderboard = data?.leaderboard || []
+  const currentUserRank = data?.currentUserRank
+
+  // Podium users (Top 3)
+  const first = leaderboard.length > 0 ? leaderboard[0] : null
+  const second = leaderboard.length > 1 ? leaderboard[1] : null
+  const third = leaderboard.length > 2 ? leaderboard[2] : null
+  const others = leaderboard.slice(3)
+
   return (
     <>
       <style dangerouslySetInnerHTML={{
@@ -84,39 +121,59 @@ export default function LeaderboardPage() {
             <div>
               <div className="eyebrow">Sổ điểm danh dự</div>
               <h1>Bảng xếp <em>hạng</em></h1>
-              <p>Cùng xem ai là người chăm chỉ nhất toàn hệ thống tuần này.</p>
+              <p>Cùng xem ai là người chăm chỉ nhất toàn hệ thống.</p>
             </div>
             <div className="scope-ticket">TOP 10 &middot; TOÀN TRƯỜNG</div>
           </div>
 
           <div className="podium">
-            <div className="p-card">
-              <div className="rank-stamp">2</div>
-              <h3>Bảo Trân</h3>
-              <div className="xp">2,140 XP</div>
-            </div>
-            <div className="p-card first">
-              <div className="rank-stamp">1</div>
-              <h3>Minh Khang</h3>
-              <div className="xp">2,480 XP</div>
-            </div>
-            <div className="p-card">
-              <div className="rank-stamp">3</div>
-              <h3>Gia Hân</h3>
-              <div className="xp">1,960 XP</div>
-            </div>
+            {second ? (
+              <div className="p-card">
+                <div className="rank-stamp">2</div>
+                <h3>{second.name}</h3>
+                <div className="xp">{second.totalXP.toLocaleString()} XP</div>
+              </div>
+            ) : <div />}
+            {first ? (
+              <div className="p-card first">
+                <div className="rank-stamp">1</div>
+                <h3>{first.name}</h3>
+                <div className="xp">{first.totalXP.toLocaleString()} XP</div>
+              </div>
+            ) : <div />}
+            {third ? (
+              <div className="p-card">
+                <div className="rank-stamp">3</div>
+                <h3>{third.name}</h3>
+                <div className="xp">{third.totalXP.toLocaleString()} XP</div>
+              </div>
+            ) : <div />}
           </div>
 
           <div className="board">
             <div className="board-head">
               <h2>Danh sách xếp hạng</h2>
-              <span className="you-badge">Bạn đang xếp #12</span>
+              {currentUserRank && (
+                <span className="you-badge">Bạn đang xếp #{currentUserRank.rank}</span>
+              )}
             </div>
-            <div className="row"><span className="rank">04</span><span className="name">Đức Anh</span><span className="lvl">LV 14</span><span className="xp">1,720 XP</span></div>
-            <div className="row"><span className="rank">05</span><span className="name">Thảo Vy</span><span className="lvl">LV 13</span><span className="xp">1,655 XP</span></div>
-            <div className="row"><span className="rank">06</span><span className="name">Quang Huy</span><span className="lvl">LV 13</span><span className="xp">1,590 XP</span></div>
-            <div className="row"><span className="rank">07</span><span className="name">Ngọc Ánh</span><span className="lvl">LV 12</span><span className="xp">1,510 XP</span></div>
-            <div className="row you"><span className="rank">12</span><span className="name">Bạn (Minh)</span><span className="lvl">LV 12</span><span className="xp">1,180 XP</span></div>
+            {others.map((user: any) => (
+              <div key={user.userId} className={`row ${currentUserRank?.userId === user.userId ? 'you' : ''}`}>
+                <span className="rank">{String(user.rank).padStart(2, '0')}</span>
+                <span className="name">{user.name} {currentUserRank?.userId === user.userId && '(Bạn)'}</span>
+                <span className="lvl">LV {user.level}</span>
+                <span className="xp">{user.totalXP.toLocaleString()} XP</span>
+              </div>
+            ))}
+            
+            {currentUserRank && currentUserRank.rank > 10 && (
+              <div className="row you border-t-2 border-[#1D2B4F]">
+                <span className="rank">{String(currentUserRank.rank).padStart(2, '0')}</span>
+                <span className="name">{currentUserRank.name} (Bạn)</span>
+                <span className="lvl">LV {currentUserRank.level}</span>
+                <span className="xp">{currentUserRank.totalXP.toLocaleString()} XP</span>
+              </div>
+            )}
           </div>
         </div>
       </div>

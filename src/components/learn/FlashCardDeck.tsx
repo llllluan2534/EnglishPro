@@ -13,6 +13,7 @@ export default function FlashCardDeck({ topicId }: FlashCardDeckProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [sessionStats, setSessionStats] = useState({ correct: 0, total: 0 })
   const [isRevealed, setIsRevealed] = useState(false)
+  const [typedWord, setTypedWord] = useState('')
 
   const { data, isLoading } = useQuery({
     queryKey: ['flashcards-due', topicId],
@@ -44,6 +45,7 @@ export default function FlashCardDeck({ topicId }: FlashCardDeckProps) {
       }))
       setCurrentIndex(prev => prev + 1)
       setIsRevealed(false)
+      setTypedWord('')
     },
   })
 
@@ -63,6 +65,7 @@ export default function FlashCardDeck({ topicId }: FlashCardDeckProps) {
     setCurrentIndex(0)
     setSessionStats({ correct: 0, total: 0 })
     setIsRevealed(false)
+    setTypedWord('')
     queryClient.invalidateQueries({ queryKey: ['flashcards-due', topicId] })
   }
 
@@ -124,23 +127,78 @@ export default function FlashCardDeck({ topicId }: FlashCardDeckProps) {
       <div className="deck-meta">
         Thẻ <b>{currentIndex + 1}</b> / {cards.length} &middot; Tiến độ <b>{sessionStats.correct}</b> đúng
       </div>
-      <div className="card-stack" onClick={() => !isRevealed && setIsRevealed(true)}>
+      <div className="card-stack">
         <div className="stack-layer l2"></div>
         <div className="stack-layer l1"></div>
-        <div className="flash-card" style={{ cursor: !isRevealed ? 'pointer' : 'default' }}>
+        <div className="flash-card">
           <span className="corner">{String(currentIndex + 1).padStart(2, '0')}/{cards.length}</span>
           {currentCard.vocabulary.topic?.grade && (
              <span className="corner r">LỚP {currentCard.vocabulary.topic.grade}</span>
           )}
-          <div className="word">{currentCard.vocabulary.word}</div>
+          <div className="word" style={{ fontSize: '28px', color: 'var(--ink)', marginBottom: '20px' }}>{currentCard.vocabulary.definition}</div>
           
           {isRevealed ? (
             <>
-              <div className="phon" style={{ marginBottom: 10 }}>{currentCard.vocabulary.pronunciation}</div>
-              <div className="phon" style={{ color: 'var(--ink)' }}>{currentCard.vocabulary.definition}</div>
+              <div className="phon" style={{ marginBottom: 10, fontSize: '32px', fontWeight: 'bold', color: '#C1432E' }}>{currentCard.vocabulary.word}</div>
+              <div className="phon" style={{ color: 'var(--ink-soft)' }}>{currentCard.vocabulary.pronunciation}</div>
+              
+              <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px dashed var(--paper-line)', width: '100%' }}>
+                <span style={{ fontSize: '14px', color: 'var(--ink-soft)' }}>Bạn đã nhập: </span>
+                <span style={{ 
+                  fontSize: '18px', 
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontWeight: 'bold', 
+                  color: typedWord.toLowerCase().trim() === currentCard.vocabulary.word.toLowerCase() ? 'var(--green)' : 'var(--red)'
+                }}>
+                  {typedWord || '(để trống)'}
+                </span>
+              </div>
             </>
           ) : (
-            <div className="phon" style={{ marginTop: 20, fontStyle: 'italic', opacity: 0.7 }}>Bấm vào thẻ để xem đáp án</div>
+            <form 
+              onSubmit={(e) => { 
+                e.preventDefault(); 
+                if (typedWord.trim()) setIsRevealed(true); 
+              }} 
+              style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+            >
+              <input 
+                type="text" 
+                value={typedWord}
+                onChange={(e) => setTypedWord(e.target.value)}
+                placeholder="Nhập từ vựng tiếng Anh..."
+                autoFocus
+                style={{
+                  width: '80%',
+                  padding: '12px 16px',
+                  fontSize: '18px',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  border: '2px solid var(--ink)',
+                  background: 'var(--card)',
+                  color: 'var(--ink)',
+                  textAlign: 'center',
+                  outline: 'none',
+                  marginBottom: '16px'
+                }}
+              />
+              <button 
+                type="submit"
+                disabled={!typedWord.trim()}
+                style={{
+                  padding: '10px 32px',
+                  background: typedWord.trim() ? 'var(--ink)' : 'var(--ink-soft)',
+                  color: 'var(--paper)',
+                  border: '2px solid var(--ink)',
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontWeight: 'bold',
+                  cursor: typedWord.trim() ? 'pointer' : 'not-allowed',
+                  transition: 'all 0.2s',
+                  boxShadow: typedWord.trim() ? '4px 4px 0 var(--ink-soft)' : 'none'
+                }}
+              >
+                Kiểm tra
+              </button>
+            </form>
           )}
         </div>
       </div>

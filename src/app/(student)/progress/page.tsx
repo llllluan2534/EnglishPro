@@ -1,17 +1,51 @@
-import { Target } from 'lucide-react'
+'use client'
+
+import { Target, Loader2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 export default function ProgressPage() {
-   const week = [
-      { day: 'T2', xp: 40 },
-      { day: 'T3', xp: 70 },
-      { day: 'T4', xp: 45 },
-      { day: 'T5', xp: 90 },
-      { day: 'T6', xp: 65 },
-      { day: 'T7', xp: 30 },
+   const [data, setData] = useState<any>(null)
+   const [loading, setLoading] = useState(true)
+
+   useEffect(() => {
+     fetch('/api/progress')
+       .then(res => res.json())
+       .then(resData => {
+         setData(resData)
+         setLoading(false)
+       })
+       .catch(err => {
+         console.error(err)
+         setLoading(false)
+       })
+   }, [])
+
+   if (loading) {
+     return (
+       <div className="flex justify-center items-center min-h-[60vh]">
+         <Loader2 className="w-10 h-10 animate-spin text-[#C1432E]" />
+       </div>
+     )
+   }
+
+   const week = data?.week || [
+      { day: 'T2', xp: 0 },
+      { day: 'T3', xp: 0 },
+      { day: 'T4', xp: 0 },
+      { day: 'T5', xp: 0 },
+      { day: 'T6', xp: 0 },
+      { day: 'T7', xp: 0 },
       { day: 'CN', xp: 0 },
    ]
-   const maxXp = 100
-   const today = 'T7'
+   const maxXp = data?.maxXp || 100
+   const today = data?.today || 'T2'
+   const bestSkill = data?.bestSkill || 'Chưa có dữ liệu'
+   const bestScore = data?.bestScore || 0
+
+   const todayXP = week.find((d: any) => d.day === today)?.xp || 0
+   const goalXP = 100
+   const remainingXP = Math.max(0, goalXP - todayXP)
+   const goalPercent = Math.min(100, (todayXP / goalXP) * 100)
 
    return (
       <div className="max-w-7xl mx-auto pb-20" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -56,7 +90,7 @@ export default function ProgressPage() {
                      className="absolute left-0 right-0 top-0 h-px"
                      style={{ backgroundImage: 'repeating-linear-gradient(90deg, #E7DEC9 0 4px, transparent 4px 8px)' }}
                   />
-                  {week.map(({ day, xp }) => (
+                  {week.map(({ day, xp }: any) => (
                      <div key={day} className="flex-1 flex flex-col items-center gap-2.5 h-full justify-end relative group">
                         <span
                            className="absolute -top-6 left-1/2 -translate-x-1/2 text-[11px] font-bold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity text-[#C1432E]"
@@ -89,18 +123,18 @@ export default function ProgressPage() {
                      </div>
                      <div>
                         <h3 className="text-[17px] font-semibold text-[#1D2B4F]" style={{ fontFamily: "'Fraunces', serif" }}>
-                           Mục tiêu ngày
+                           Mục tiêu ngày ({goalXP} XP)
                         </h3>
                         <div className="text-[12px] text-[#6B7A94]" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                           Còn 20 XP nữa
+                           {remainingXP > 0 ? `Còn ${remainingXP} XP nữa` : 'Đã đạt mục tiêu!'}
                         </div>
                      </div>
                   </div>
                   <div className="h-2.5 bg-[#FBF6EC] border border-[#E7DEC9] relative mb-2.5">
-                     <div className="absolute inset-0 w-[60%] bg-[#4C7A6B]" />
+                     <div className="absolute inset-0 bg-[#4C7A6B]" style={{ width: `${goalPercent}%` }} />
                   </div>
                   <p className="text-[12px] text-[#6B7A94] text-right italic" style={{ fontFamily: "'Fraunces', serif" }}>
-                     "Sắp xong rồi, cố lên nhé!"
+                     {remainingXP > 0 ? '"Sắp xong rồi, cố lên nhé!"' : '"Tuyệt vời! Bạn đã hoàn thành xuất sắc!"'}
                   </p>
                </div>
 
@@ -112,12 +146,12 @@ export default function ProgressPage() {
                   <h3 className="text-[19px] font-semibold mb-1" style={{ fontFamily: "'Fraunces', serif" }}>
                      Kỹ năng tốt nhất
                   </h3>
-                  <p className="text-[12px] text-[#B9BFCF] mb-5">Ngữ pháp &amp; Từ vựng</p>
+                  <p className="text-[12px] text-[#B9BFCF] mb-5">{bestSkill}</p>
                   <div className="h-1.5 bg-white/15 relative mb-2">
-                     <div className="absolute inset-0 w-[85%] bg-[#E3A73B]" />
+                     <div className="absolute inset-0 bg-[#E3A73B]" style={{ width: `${bestScore}%` }} />
                   </div>
                   <div className="text-[11px] text-[#E3A73B] text-right" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                     85%
+                     {bestScore}%
                   </div>
                </div>
             </div>
