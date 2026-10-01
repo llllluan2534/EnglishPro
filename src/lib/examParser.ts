@@ -187,6 +187,7 @@ function extractAnswerKeyMap(text: string): Map<number, string> {
 
 /**
  * Phân tích văn bản đề thi và bóc tách thành danh sách câu hỏi chuẩn hóa
+ * Hỗ trợ tự động gom đoạn văn bài đọc (Reading Passage) vào từng câu hỏi liên quan!
  */
 export function parseExamText(rawText: string): ParsedQuestion[] {
   if (!rawText || !rawText.trim()) {
@@ -206,12 +207,33 @@ export function parseExamText(rawText: string): ParsedQuestion[] {
   // "Question 1.", "Câu 1:", "1. ", "1) "
   const questionStartRegex = /^(?:(?:Câu|Question|Bài|Item)\s*)?(\d+)[\.\:\)\/\-\s]\s*(.*)/i
 
-  // Nhận diện dòng chỉ dẫn chung của phần / bài tập (Pronunciation, Stress, Cloze, Reading, etc.)
+  // Nhận diện dòng chỉ dẫn chung của phần / bài tập
   const instructionRegex = /^(?:(?:Mark\s+the\s+letter|Read\s+the\s+following|Choose\s+the|PHẦN\s+[IVX\d]+|PART\s+[IVX\d]+|SECTION\s+[IVX\d]+|EXERCISE\s+\d+|[IVX]+\.)\b|Đọc\s+đoạn\s+văn|Chọn\s+phương\s+án)/i
 
-  const rawQuestions: { num: number; header: string; instruction: string; contentLines: string[] }[] = []
-  let currentQ: { num: number; header: string; instruction: string; contentLines: string[] } | null = null
+  // Nhận diện riêng dòng bắt đầu bài đọc Reading
+  const readingStartRegex = /^(?:Read\s+the\s+following\s+passage|Đọc\s+đoạn\s+văn\s+sau|Read\s+the\s+passage)/i
+
+  const rawQuestions: {
+    num: number
+    header: string
+    instruction: string
+    passage?: string
+    contentLines: string[]
+  }[] = []
+
+  let currentQ: {
+    num: number
+    header: string
+    instruction: string
+    passage?: string
+    contentLines: string[]
+  } | null = null
+
   let activeInstruction = ''
+  let isCollectingPassage = false
+  let collectedPassageLines: string[] = []
+  let activePassage: string | null = null
+  let passageRange: { start: number; end: number } | null = null
 
   for (const line of lines) {
     // A. Dừng khi gặp khu vực BẢNG ĐÁP ÁN ở cuối đề
@@ -223,17 +245,42 @@ export function parseExamText(rawText: string): ParsedQuestion[] {
       break
     }
 
-    // B. Kiểm tra dòng chỉ dẫn chung
-    if (instructionRegex.test(line)) {
+    // B. Kiểm tra dòng bắt đầu bài đọc Reading mới
+    if (readingStartRegex.test(line)) {
       if (currentQ) {
         rawQuestions.push(currentQ)
         currentQ = null
       }
       activeInstruction = line
+      isCollectingPassage = true
+      collectedPassageLines = []
+      activePassage = null
+
+      // Trích xuất khoảng câu hỏi nếu có: from 3 to 5 hoặc questions 31 to 35
+      const rangeMatch = line.match(/(?:from|từ)\s+(?:câu\s+)?(\d+)\s+(?:to|đến)\s+(?:câu\s+)?(\d+)|questions?\s+(\d+)\s*(?:-|to)\s*(\d+)/i)
+      if (rangeMatch) {
+        const start = parseInt(rangeMatch[1] || rangeMatch[3], 10)
+        const end = parseInt(rangeMatch[2] || rangeMatch[4], 10)
+        passageRange = { start, end }
+      } else {
+        passageRange = null
+      }
       continue
     }
 
-    // C. Kiểm tra dòng bắt đầu câu hỏi
+    // C. Kiểm tra dòng chỉ dẫn chung không phải reading
+    if (instructionRegex.test(line) && !isCollectingPassage) {
+      if (currentQ) {
+        rawQuestions.push(currentQ)
+        currentQ = null
+      }
+      activeInstruction = line
+      activePassage = null
+      passageRange = null
+      continue
+    }
+
+    // D. Kiểm tra dòng bắt đầu câu hỏi
     const qMatch = line.match(questionStartRegex)
     if (qMatch) {
       const qNum = parseInt(qMatch[1], 10)
@@ -241,20 +288,50 @@ export function parseExamText(rawText: string): ParsedQuestion[] {
       const hasPrefix = /^(?:Câu|Question|Bài|Item)/i.test(line)
 
       if (qNum > 0 && qNum <= 250 && (hasPrefix || afterText.length > 2)) {
+        // Nếu đang gom đoạn văn bài đọc -> kết thúc thu thập đoạn văn tại đây!
+        if (isCollectingPassage) {
+          isCollectingPassage = false
+          activePassage = collectedPassageLines.join('\n\n').trim()
+        }
+
         if (currentQ) {
           rawQuestions.push(currentQ)
         }
+
+        // Xác định xem câu này có gắn với bài đọc không
+        let questionPassage: string | undefined = undefined
+        if (activePassage) {
+          if (passageRange) {
+            if (qNum >= passageRange.start && qNum <= passageRange.end) {
+              questionPassage = activePassage
+            } else {
+              // Hết phạm vi câu hỏi của bài đọc này
+              activePassage = null
+              passageRange = null
+            }
+          } else {
+            questionPassage = activePassage
+          }
+        }
+
         currentQ = {
           num: qNum,
           header: afterText,
           instruction: activeInstruction,
+          passage: questionPassage,
           contentLines: afterText ? [afterText] : []
         }
         continue
       }
     }
 
-    // D. Dòng nội dung câu hỏi
+    // E. Nếu đang trong giai đoạn gom đoạn văn Reading
+    if (isCollectingPassage) {
+      collectedPassageLines.push(line)
+      continue
+    }
+
+    // F. Dòng nội dung câu hỏi
     if (currentQ) {
       if (!currentQ.header && line) {
         currentQ.header = line
@@ -332,10 +409,16 @@ export function parseExamText(rawText: string): ParsedQuestion[] {
       .replace(/^(?:Câu|Question|Bài)\s*\d+[\.\:\/\s\-]+/i, '')
       .trim()
 
-    // NẾU questionText RỖNG (thường gặp ở câu phát âm/trọng âm/từ vựng dạng "1. A. ... B. ... C. ... D. ..."):
-    // Kế thừa chỉ dẫn chung của phần đó (rawQ.instruction)!
-    if (!questionText && rawQ.instruction) {
-      questionText = rawQ.instruction
+    // Xử lý câu hỏi rỗng
+    if (!questionText) {
+      if (rawQ.passage) {
+        // Nếu là câu điền từ trong bài đọc
+        questionText = `Chọn phương án thích hợp nhất cho vị trí (${rawQ.num}) trong đoạn văn`
+      } else if (rawQ.instruction) {
+        questionText = rawQ.instruction
+      } else {
+        questionText = `Chọn phương án đúng cho Câu ${rawQ.num}`
+      }
     }
 
     // Danh sách 4 phương án A, B, C, D
@@ -359,24 +442,22 @@ export function parseExamText(rawText: string): ParsedQuestion[] {
       { text: optionMap['D'] || 'Lựa chọn D', isCorrect: detectedCorrectLetter === 'D', order: 3 },
     ]
 
-    // Nếu chưa có đáp án đúng, tạm chọn phương án đầu tiên
     if (!finalOptions.some(o => o.isCorrect)) {
       finalOptions[0].isCorrect = true
     }
 
-    // Phỏng đoán kỹ năng
-    let skill: 'READING' | 'LISTENING' | 'GRAMMAR' | 'VOCABULARY' | 'WRITING' = 'READING'
-    const checkText = (questionText + ' ' + (rawQ.instruction || '')).toLowerCase()
-    if (checkText.includes('pronunciation') || checkText.includes('stress') || checkText.includes('underlined part')) {
-      skill = 'VOCABULARY'
-    } else if (checkText.includes('listen') || checkText.includes('audio') || checkText.includes('conversation')) {
-      skill = 'LISTENING'
-    } else if (checkText.includes('grammatical') || checkText.includes('tense') || checkText.includes('clause') || checkText.includes('fill in the blank')) {
-      skill = 'GRAMMAR'
+    // Kỹ năng: Nếu có passage -> Chắc chắn là READING!
+    let skill: 'READING' | 'LISTENING' | 'GRAMMAR' | 'VOCABULARY' | 'WRITING' = rawQ.passage ? 'READING' : 'READING'
+    if (!rawQ.passage) {
+      const checkText = (questionText + ' ' + (rawQ.instruction || '')).toLowerCase()
+      if (checkText.includes('pronunciation') || checkText.includes('stress') || checkText.includes('underlined part')) {
+        skill = 'VOCABULARY'
+      } else if (checkText.includes('listen') || checkText.includes('audio') || checkText.includes('conversation')) {
+        skill = 'LISTENING'
+      } else if (checkText.includes('grammatical') || checkText.includes('tense') || checkText.includes('clause') || checkText.includes('fill in the blank')) {
+        skill = 'GRAMMAR'
+      }
     }
-
-    // Fallback nếu vẫn không có text
-    const finalQuestionText = questionText || `Chọn phương án đúng cho Câu ${rawQ.num}`
 
     questions.push({
       order: idx + 1,
@@ -384,7 +465,8 @@ export function parseExamText(rawText: string): ParsedQuestion[] {
       type: 'MULTIPLE_CHOICE',
       difficulty: 'MEDIUM',
       points: 1,
-      text: finalQuestionText,
+      text: questionText,
+      passage: rawQ.passage || undefined,
       options: finalOptions,
       explanation: explanation || undefined,
     })

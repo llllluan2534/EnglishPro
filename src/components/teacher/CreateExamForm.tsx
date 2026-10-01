@@ -1161,17 +1161,34 @@ BẢNG ĐÁP ÁN:
                       </div>
 
                       {/* Đoạn văn đọc hiểu nếu có */}
-                      {q.skill === 'READING' && (
-                        <div>
-                          <label className="block text-[11px] font-mono text-[#6B7A94] mb-1">
-                            Đoạn văn đọc hiểu (Passage - Tùy chọn nếu là câu đọc hiểu chung):
-                          </label>
+                      {(q.skill === 'READING' || q.passage) && (
+                        <div className="p-3 bg-[#F4EFE6] border-2 border-[#1D2B4F] space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-mono font-bold uppercase text-[#1D2B4F] flex items-center gap-1.5">
+                              <BookOpen size={14} className="text-[#C1432E]" />
+                              Đoạn văn bài đọc hiểu (Reading Passage)
+                              {q.passage && (
+                                <span className="px-2 py-0.5 text-[10px] bg-[#4C7A6B] text-white font-mono font-bold">
+                                  ĐÃ GẮN BÀI ĐỌC ({q.passage.length} ký tự)
+                                </span>
+                              )}
+                            </label>
+                            {q.passage && (
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateQuestion(qIdx, 'passage', '')}
+                                className="text-[11px] font-mono text-[#C1432E] hover:underline"
+                              >
+                                Xóa bài đọc khỏi câu này
+                              </button>
+                            )}
+                          </div>
                           <textarea
-                            rows={3}
+                            rows={q.passage ? 4 : 2}
                             value={q.passage || ''}
                             onChange={e => handleUpdateQuestion(qIdx, 'passage', e.target.value)}
-                            placeholder="Dán đoạn văn bản đọc hiểu vào đây nếu có..."
-                            className="w-full px-3 py-2 bg-[#FBF6EC] border border-[#E7DEC9] text-xs font-mono focus:outline-none focus:bg-white"
+                            placeholder="Đoạn văn đọc hiểu sẽ được tự động điền khi quét đề thi, hoặc bạn có thể dán bài đọc vào đây..."
+                            className="w-full px-3 py-2 bg-white border border-[#1D2B4F] text-xs font-mono focus:outline-none leading-relaxed"
                           />
                         </div>
                       )}
