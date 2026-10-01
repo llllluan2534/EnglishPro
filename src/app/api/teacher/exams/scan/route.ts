@@ -54,11 +54,17 @@ export async function POST(req: Request) {
     // Bóc tách đề thi thông minh
     const questions = parseExamText(rawText)
 
+    console.log(`[Exam Scan] File: ${fileName || 'Direct Text'}, Raw Length: ${rawText.length}, Questions: ${questions.length}`)
+    if (questions.length > 0) {
+      console.log(`[Exam Scan] Q1 Text: "${questions[0].text}"`)
+      console.log(`[Exam Scan] Q1 Options:`, questions[0].options.map(o => `${o.isCorrect ? '(*)' : ''}${o.text}`).join(' | '))
+    }
+
     if (questions.length === 0) {
       return NextResponse.json({
         success: false,
         warning: 'Không thể tự động nhận diện câu hỏi từ tệp này. Bạn có thể sao chép văn bản và dán trực tiếp vào ô nhập đề.',
-        rawTextPreview: rawText.slice(0, 1000),
+        rawTextPreview: rawText.slice(0, 3000),
         questions: []
       })
     }
@@ -68,7 +74,7 @@ export async function POST(req: Request) {
       fileName,
       totalParsed: questions.length,
       questions,
-      rawTextPreview: rawText.slice(0, 500)
+      rawTextPreview: rawText.slice(0, 3000)
     })
   } catch (error: any) {
     console.error('Scan exam document error:', error)

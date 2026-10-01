@@ -70,6 +70,8 @@ export default function CreateExamForm({ availableQuestions }: CreateExamFormPro
   const [pasteText, setPasteText] = useState('')
   const [scanResultNotice, setScanResultNotice] = useState<string | null>(null)
   const [showSampleGuide, setShowSampleGuide] = useState(false)
+  const [rawExtractedPreview, setRawExtractedPreview] = useState<string | null>(null)
+  const [showExtractedModal, setShowExtractedModal] = useState(false)
 
   // Bank selection state
   const [bankSearch, setBankSearch] = useState('')
@@ -222,6 +224,7 @@ export default function CreateExamForm({ availableQuestions }: CreateExamFormPro
       }))
 
       setQuestions(prev => [...prev, ...newItems])
+      setRawExtractedPreview(extractedText || data.rawTextPreview || null)
       setScanResultNotice(`Đã quét thành công ${newItems.length} câu hỏi từ tệp "${selectedFile.name}"!`)
 
       // Tự động gợi ý tiêu đề đề thi nếu chưa có
@@ -277,6 +280,7 @@ export default function CreateExamForm({ availableQuestions }: CreateExamFormPro
       }))
 
       setQuestions(prev => [...prev, ...newItems])
+      setRawExtractedPreview(pasteText)
       setScanResultNotice(`Đã quét thành công ${newItems.length} câu hỏi từ văn bản dán!`)
       setPasteText('')
     } catch (err: any) {
@@ -518,14 +522,73 @@ export default function CreateExamForm({ availableQuestions }: CreateExamFormPro
 
       {/* Thông báo thành công từ scan */}
       {scanResultNotice && (
-        <div className="p-4 bg-[#DCE9E3] border-2 border-[#4C7A6B] text-[#4C7A6B] font-bold text-xs flex items-center justify-between gap-3 shadow-[3px_3px_0_#4C7A6B]">
+        <div className="p-4 bg-[#DCE9E3] border-2 border-[#4C7A6B] text-[#4C7A6B] font-bold text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[3px_3px_0_#4C7A6B]">
           <div className="flex items-center gap-2">
             <CheckCircle2 size={18} className="shrink-0" />
             <span>{scanResultNotice}</span>
           </div>
-          <button type="button" onClick={() => setScanResultNotice(null)} className="p-1 hover:bg-[#4C7A6B] hover:text-white transition-colors">
-            <X size={16} />
-          </button>
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            {rawExtractedPreview && (
+              <button
+                type="button"
+                onClick={() => setShowExtractedModal(true)}
+                className="px-2.5 py-1 bg-white border border-[#4C7A6B] text-[#4C7A6B] text-[11px] font-mono hover:bg-[#4C7A6B] hover:text-white transition-colors"
+              >
+                👁️ Xem văn bản đã đọc
+              </button>
+            )}
+            <button type="button" onClick={() => setScanResultNotice(null)} className="p-1 hover:bg-[#4C7A6B] hover:text-white transition-colors">
+              <X size={16} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal xem trước văn bản gốc đã trích xuất */}
+      {showExtractedModal && rawExtractedPreview && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-[#FFFDF7] border-2 border-[#1D2B4F] shadow-[8px_8px_0_#1D2B4F] max-w-3xl w-full max-h-[85vh] flex flex-col">
+            <div className="p-4 bg-[#FBF6EC] border-b-2 border-[#1D2B4F] flex items-center justify-between">
+              <div className="font-bold font-serif text-base text-[#1D2B4F]">
+                Văn bản gốc trích xuất từ file ({rawExtractedPreview.length} ký tự)
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowExtractedModal(false)}
+                className="p-1 hover:bg-[#C1432E] hover:text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto flex-1 font-mono text-xs text-[#1D2B4F] whitespace-pre-wrap leading-relaxed bg-[#FBF6EC]">
+              {rawExtractedPreview}
+            </div>
+            <div className="p-4 bg-[#FFFDF7] border-t-2 border-[#1D2B4F] flex items-center justify-between gap-3">
+              <span className="text-[11px] font-mono text-[#6B7A94]">
+                Bạn có thể sao chép văn bản này hoặc chuyển sang tab &quot;Dán nhanh văn bản&quot; để tự sửa.
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPasteText(rawExtractedPreview)
+                    setImportMode('PASTE')
+                    setShowExtractedModal(false)
+                  }}
+                  className="px-3 py-1.5 bg-[#1D2B4F] text-white text-xs font-mono font-bold hover:bg-[#2A3C6B]"
+                >
+                  Chuyển sang tab Dán nhanh
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowExtractedModal(false)}
+                  className="px-3 py-1.5 border border-[#1D2B4F] text-xs font-mono font-bold hover:bg-[#E7DEC9]"
+                >
+                  Đóng
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

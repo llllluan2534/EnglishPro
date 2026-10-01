@@ -51,16 +51,13 @@ export function extractTextFromDocx(buffer: Buffer): string {
       if (fileName === 'word/document.xml') {
         const compressedData = buffer.subarray(dataStart, dataEnd)
         if (compressionMethod === 8) {
-          // Deflate
           documentXmlBuffer = zlib.inflateRawSync(compressedData)
         } else if (compressionMethod === 0) {
-          // Stored (no compression)
           documentXmlBuffer = compressedData
         }
         break
       }
 
-      // Nhảy tới file tiếp theo
       offset = dataEnd
     }
 
@@ -109,14 +106,12 @@ export function extractTextFromDocx(buffer: Buffer): string {
 
 /**
  * Trích xuất text từ Buffer file .pdf
- * Quét các stream FlateDecode và lấy text từ toán tử Tj / TJ
  */
 export function extractTextFromPdf(buffer: Buffer): string {
   try {
     const raw = buffer.toString('latin1')
     const textBlocks: string[] = []
 
-    // Tìm các stream trong PDF
     const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g
     let streamMatch: RegExpExecArray | null
 
@@ -132,14 +127,12 @@ export function extractTextFromPdf(buffer: Buffer): string {
         decompressed = streamData
       }
 
-      // Tìm các chuỗi văn bản trong toán tử Tj: (Văn bản) Tj
       const tjRegex = /\(([^)]*)\)\s*Tj/g
       let tjMatch: RegExpExecArray | null
       while ((tjMatch = tjRegex.exec(decompressed)) !== null) {
         textBlocks.push(tjMatch[1])
       }
 
-      // Tìm trong mảng TJ: [(Văn bản 1) -10 (Văn bản 2)] TJ
       const tjArrayRegex = /\[([^\]]*)\]\s*TJ/g
       let tjArrayMatch: RegExpExecArray | null
       while ((tjArrayMatch = tjArrayRegex.exec(decompressed)) !== null) {
@@ -171,16 +164,14 @@ export function extractTextFromPdf(buffer: Buffer): string {
 }
 
 /**
- * Trích xuất bảng đáp án ở cuối đề thi nếu có
- * Dạng: "BẢNG ĐÁP ÁN: 1.A 2.B 3.C 4.D" hoặc "1-A, 2-B, 3-C" hoặc "1A 2B 3C"
+ * Trích xuất bảng đáp án ở cuối đề thi
  */
 function extractAnswerKeyMap(text: string): Map<number, string> {
   const answerMap = new Map<number, string>()
-
-  const keyHeaderMatch = text.match(/(?:BẢNG\s+ĐÁP\s+ÁN|ĐÁP\s+ÁN\s+CHI\s+TIẾT|ANSWER\s+KEY|HƯỚNG\s+DẪN\s+CHẤM|ĐÁP\s+ÁN|KEY)([\s\S]*)$/i)
+  const keyHeaderMatch = text.match(/(?:(?:BẢNG\s+)?ĐÁP\s*ÁN|ANSWER\s*KEY|HƯỚNG\s*DẪN\s*(?:CHẤM|GIẢI)|KEY\s*(?:ĐỀ)?)\b([\s\S]*)$/i)
   const searchText = keyHeaderMatch ? keyHeaderMatch[1] : text
 
-  const pairRegex = /(?:Câu\s+)?(\d+)[\.\:\-\s]*([A-D])\b/gi
+  const pairRegex = /(?:(?:Câu|Question)\s*)?(\d+)[\.\:\-\s]*([A-D])\b/gi
   let match: RegExpExecArray | null
 
   while ((match = pairRegex.exec(searchText)) !== null) {
@@ -211,15 +202,38 @@ export function parseExamText(rawText: string): ParsedQuestion[] {
     .map(l => l.trim())
     .filter(l => l.length > 0)
 
-  // 3. Gom cụm các dòng theo từng câu hỏi
   // Nhận diện dòng bắt đầu câu hỏi:
-  // "Câu 1:", "Câu 1. ...", "Question 1: ...", "1. ...", "1) ...", "1/ ..."
+  // "Question 1.", "Câu 1:", "1. ", "1) "
   const questionStartRegex = /^(?:(?:Câu|Question|Bài|Item)\s*)?(\d+)[\.\:\)\/\-\s]\s*(.*)/i
 
-  const rawQuestions: { num: number; header: string; contentLines: string[] }[] = []
-  let currentQ: { num: number; header: string; contentLines: string[] } | null = null
+  // Nhận diện dòng chỉ dẫn chung của phần / bài tập (Pronunciation, Stress, Cloze, Reading, etc.)
+  const instructionRegex = /^(?:(?:Mark\s+the\s+letter|Read\s+the\s+following|Choose\s+the|PHẦN\s+[IVX\d]+|PART\s+[IVX\d]+|SECTION\s+[IVX\d]+|EXERCISE\s+\d+|[IVX]+\.)\b|Đọc\s+đoạn\s+văn|Chọn\s+phương\s+án)/i
+
+  const rawQuestions: { num: number; header: string; instruction: string; contentLines: string[] }[] = []
+  let currentQ: { num: number; header: string; instruction: string; contentLines: string[] } | null = null
+  let activeInstruction = ''
 
   for (const line of lines) {
+    // A. Dừng khi gặp khu vực BẢNG ĐÁP ÁN ở cuối đề
+    if (/^(?:(?:BẢNG\s+)?ĐÁP\s*ÁN|ANSWER\s*KEY|HƯỚNG\s*DẪN\s*(?:CHẤM|GIẢI)|KEY\s*(?:ĐỀ)?)\b/i.test(line)) {
+      if (currentQ) {
+        rawQuestions.push(currentQ)
+        currentQ = null
+      }
+      break
+    }
+
+    // B. Kiểm tra dòng chỉ dẫn chung
+    if (instructionRegex.test(line)) {
+      if (currentQ) {
+        rawQuestions.push(currentQ)
+        currentQ = null
+      }
+      activeInstruction = line
+      continue
+    }
+
+    // C. Kiểm tra dòng bắt đầu câu hỏi
     const qMatch = line.match(questionStartRegex)
     if (qMatch) {
       const qNum = parseInt(qMatch[1], 10)
@@ -233,23 +247,19 @@ export function parseExamText(rawText: string): ParsedQuestion[] {
         currentQ = {
           num: qNum,
           header: afterText,
+          instruction: activeInstruction,
           contentLines: afterText ? [afterText] : []
         }
         continue
       }
     }
 
+    // D. Dòng nội dung câu hỏi
     if (currentQ) {
-      // Kiểm tra xem đã đến phần BẢNG ĐÁP ÁN ở cuối chưa
-      if (/^(?:BẢNG\s+ĐÁP\s+ÁN|ANSWER\s+KEY|HƯỚNG\s+DẪN\s+CHẤM|ĐÁP\s+ÁN\s+ĐỀ)/i.test(line)) {
-        rawQuestions.push(currentQ)
-        currentQ = null
-      } else {
-        if (!currentQ.header && line) {
-          currentQ.header = line
-        }
-        currentQ.contentLines.push(line)
+      if (!currentQ.header && line) {
+        currentQ.header = line
       }
+      currentQ.contentLines.push(line)
     }
   }
 
@@ -271,7 +281,7 @@ export function parseExamText(rawText: string): ParsedQuestion[] {
       explanation = expMatch[1].trim()
     }
 
-    // Bóc tách Đáp án đúng đi kèm trong câu
+    // Bóc tách Đáp án đúng
     let detectedCorrectLetter = answerKeyMap.get(rawQ.num) || ''
     const ansInlineMatch = fullBlock.match(/(?:Đáp\s*án(?:\s*đúng)?|Key|Ans|Correct)\s*[\:\-\=\.]\s*([A-D])\b/i)
     if (ansInlineMatch) {
@@ -305,7 +315,9 @@ export function parseExamText(rawText: string): ParsedQuestion[] {
       for (let i = 0; i < markers.length; i++) {
         const cur = markers[i]
         const nextStart = (i + 1 < markers.length) ? markers[i + 1].matchIndex : optionsSearchBlock.length
-        const optText = optionsSearchBlock.substring(cur.textStart, nextStart).trim().replace(/\n+/g, ' ')
+        let optText = optionsSearchBlock.substring(cur.textStart, nextStart).trim().replace(/\n+/g, ' ')
+        // Làm sạch nếu dính instruction hoặc Question của câu sau ở cuối
+        optText = optText.replace(/(?:Mark\s+the\s+letter|Read\s+the|Question\s*\d+|Câu\s*\d+).*$/i, '').trim()
         optionMap[cur.letter] = optText
         if (cur.isStarred) {
           detectedCorrectLetter = cur.letter
@@ -319,6 +331,12 @@ export function parseExamText(rawText: string): ParsedQuestion[] {
     questionText = questionText
       .replace(/^(?:Câu|Question|Bài)\s*\d+[\.\:\/\s\-]+/i, '')
       .trim()
+
+    // NẾU questionText RỖNG (thường gặp ở câu phát âm/trọng âm/từ vựng dạng "1. A. ... B. ... C. ... D. ..."):
+    // Kế thừa chỉ dẫn chung của phần đó (rawQ.instruction)!
+    if (!questionText && rawQ.instruction) {
+      questionText = rawQ.instruction
+    }
 
     // Danh sách 4 phương án A, B, C, D
     const letters = ['A', 'B', 'C', 'D']
@@ -348,14 +366,17 @@ export function parseExamText(rawText: string): ParsedQuestion[] {
 
     // Phỏng đoán kỹ năng
     let skill: 'READING' | 'LISTENING' | 'GRAMMAR' | 'VOCABULARY' | 'WRITING' = 'READING'
-    const lowerQ = questionText.toLowerCase()
-    if (lowerQ.includes('pronunciation') || lowerQ.includes('stress') || lowerQ.includes('underlined part') || lowerQ.includes('closest in meaning') || lowerQ.includes('opposite in meaning')) {
+    const checkText = (questionText + ' ' + (rawQ.instruction || '')).toLowerCase()
+    if (checkText.includes('pronunciation') || checkText.includes('stress') || checkText.includes('underlined part')) {
       skill = 'VOCABULARY'
-    } else if (lowerQ.includes('listen') || lowerQ.includes('audio') || lowerQ.includes('conversation')) {
+    } else if (checkText.includes('listen') || checkText.includes('audio') || checkText.includes('conversation')) {
       skill = 'LISTENING'
-    } else if (lowerQ.includes('grammatical') || lowerQ.includes('tense') || lowerQ.includes('clause') || lowerQ.includes('fill in the blank')) {
+    } else if (checkText.includes('grammatical') || checkText.includes('tense') || checkText.includes('clause') || checkText.includes('fill in the blank')) {
       skill = 'GRAMMAR'
     }
+
+    // Fallback nếu vẫn không có text
+    const finalQuestionText = questionText || `Chọn phương án đúng cho Câu ${rawQ.num}`
 
     questions.push({
       order: idx + 1,
@@ -363,7 +384,7 @@ export function parseExamText(rawText: string): ParsedQuestion[] {
       type: 'MULTIPLE_CHOICE',
       difficulty: 'MEDIUM',
       points: 1,
-      text: questionText || `Câu hỏi số ${idx + 1}`,
+      text: finalQuestionText,
       options: finalOptions,
       explanation: explanation || undefined,
     })
